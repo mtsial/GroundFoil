@@ -1,22 +1,24 @@
-# Deep Flow Prediction: Reproduction on OpenFOAM v2606
+# GroundFoil: deep learning for inverted airfoils in ground effect
 
 [![DOI](https://zenodo.org/badge/1454795941.svg)](https://doi.org/10.5281/zenodo.24176980)
 
-A reproduction of **Thuerey et al., "Deep Learning Methods for Reynolds-Averaged
-Navier-Stokes Simulations of Airfoil Flows"** (*AIAA Journal*, 2020) on current
-software: OpenFOAM v2606, gmsh 4 and Docker on Windows (about 3% test error,
-as in the paper). It is extended here to **inverted airfoils in ground effect**
-(F1 front wings). The ground-effect simulations are checked against
-high-resolution LES (skin friction within 6–7%), wind-tunnel tests of an F1
-wing (downforce gain near the ground within 4%) and finer meshes (0.04–3%).
+**GroundFoil** predicts the flow around **inverted airfoils in ground effect**
+(F1 front wings) with a U-Net trained on our own RANS simulations. It builds on
+**Thuerey et al., "Deep Learning Methods for Reynolds-Averaged Navier-Stokes
+Simulations of Airfoil Flows"** (*AIAA Journal*, 2020), which we first
+reproduced on current software: OpenFOAM v2606, gmsh 4 and Docker on Windows
+(about 3% test error, as in the paper). The ground-effect simulations are
+checked against high-resolution LES (skin friction within 6–7%), wind-tunnel
+tests of an F1 wing (downforce gain near the ground within 4%) and finer meshes
+(0.04–3%).
 Trained on 789 of these simulations, the U-Net predicts the flow around 30
 airfoils it has not seen with a 1.8% error, against 24% for the free-air
 model used as it is. The downforce computed from its pressure is off by 11%,
 and by 7.7% with a loss that counts the cells next to the wing more. The full
 dataset, 3,436 simulations, is complete; training on it is next.
 
-- Paper: https://arxiv.org/abs/1810.08217
-- Original code: https://github.com/thunil/Deep-Flow-Prediction (Apache-2.0)
+- Thuerey et al.'s paper: https://arxiv.org/abs/1810.08217
+- Their code: https://github.com/thunil/Deep-Flow-Prediction (Apache-2.0)
 
 Words used here are explained in the [glossary](docs/glossary.md).
 
@@ -141,7 +143,7 @@ ground_effect/train_unet.py       trains one U-Net (from random weights or from 
 ground_effect/learning_curve.py   trains and tests U-Nets on parts of the data, then the table and figure
 ground_effect/loss_study.py       compares training losses for the downforce: table and figure
 results/                    figures and reproduction results
-Deep-Flow-Prediction/       the original repo, cloned locally (not committed)
+Deep-Flow-Prediction/       the original code, which you clone here (see Quick start); not part of this repo
 ```
 
 ---
@@ -160,11 +162,12 @@ Deep-Flow-Prediction/       the original repo, cloned locally (not committed)
 }
 ```
 
-To cite this repository: M. T. A. Sial, *Deep Flow Prediction on OpenFOAM
-v2606, extended to inverted airfoils in ground effect*, Zenodo,
-https://doi.org/10.5281/zenodo.24176980 (all versions; v0.1.0 is
-https://doi.org/10.5281/zenodo.24176981). GitHub's "Cite this repository"
-button gives the same in other formats.
+To cite this repository: M. T. A. Sial, *GroundFoil: deep learning for
+inverted airfoils in ground effect*, Zenodo,
+https://doi.org/10.5281/zenodo.24176980 (all versions; v0.1.0, under its first
+title *Deep Flow Prediction on OpenFOAM v2606, extended to inverted airfoils in
+ground effect*, is https://doi.org/10.5281/zenodo.24176981). GitHub's "Cite
+this repository" button gives the same in other formats.
 
 Other references used on these pages: [References](docs/references.md).
 

@@ -1,18 +1,18 @@
 cff-version: 1.2.0
 message: "If you use this work, please cite it as below, together with the original paper by Thuerey et al. (2020)."
-title: "Deep Flow Prediction on OpenFOAM v2606, extended to inverted airfoils in ground effect"
+title: "GroundFoil: deep learning for inverted airfoils in ground effect"
 type: software
 authors:
   - given-names: "Muhammad Taimoor Aslam"
     family-names: "Sial"
     orcid: "https://orcid.org/0009-0007-2268-1977"
-repository-code: "https://github.com/taimooraslam22g/deep-flow-prediction-openfoam-v2606"
+repository-code: "https://github.com/taimooraslam22g/GroundFoil"
 license: Apache-2.0
 abstract: >-
-  A reproduction of the U-Net of Thuerey et al. (AIAA Journal, 2020), which predicts
-  RANS flow fields (pressure and velocity) around airfoils, on OpenFOAM v2606, gmsh 4
-  and Docker, extended to inverted airfoils in ground effect (F1 front wings). It
-  contains the ground-effect data generator (OpenFOAM, Spalart-Allmaras model, moving
+  GroundFoil predicts the RANS flow (pressure and velocity) around inverted airfoils in
+  ground effect (F1 front wings) with a U-Net trained on our own simulations. It builds
+  on a reproduction of the U-Net of Thuerey et al. (AIAA Journal, 2020) on OpenFOAM
+  v2606, gmsh 4 and Docker. It contains the ground-effect data generator (OpenFOAM, Spalart-Allmaras model, moving
   ground, boundary-layer mesh), its verification and validation (high-resolution LES of
   a NACA 4412, wind-tunnel tests of the Tyrrell 026 wing, grid convergence), the
   smoothing of 1,462 UIUC airfoils, a parameter scan of where steady RANS converges in
