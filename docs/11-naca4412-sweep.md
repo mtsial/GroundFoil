@@ -1,6 +1,6 @@
 # 11. A wing the U-Net has not seen: the NACA 4412 near the ground
 
-[README](../README.md) · ← [10. All the data](10-all-data.md) · [Workflow](../README.md#workflow)
+[README](../README.md) · ← [10. All the data](10-all-data.md) · [12. The F1 wing](12-tyrrell026-sweep.md) → · [Workflow](../README.md#workflow)
 
 We simulated the NACA 4412 upside down at 12 ride heights and in free air,
 then asked the U-Net for the same cases. The CFD shows the classic
@@ -100,4 +100,4 @@ U-Net and the tunnel); figures of predicted and simulated flow fields.
 
 ---
 
-[README](../README.md) · ← [10. All the data](10-all-data.md) · [Workflow](../README.md#workflow)
+[README](../README.md) · ← [10. All the data](10-all-data.md) · [12. The F1 wing](12-tyrrell026-sweep.md) → · [Workflow](../README.md#workflow)

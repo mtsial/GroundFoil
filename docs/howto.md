@@ -16,7 +16,7 @@ dataset, and the training on Kaggle.
 - [Airfoil smoothing (on Windows)](#airfoil-smoothing-on-windows)
 - [Parameter scan and dataset](#parameter-scan-and-dataset)
 - [Training the U-Net](#training-the-u-net)
-- [Ride-height sweep of a new wing](#ride-height-sweep-of-a-new-wing)
+- [Ride-height sweeps of new wings](#ride-height-sweeps-of-new-wings)
 - [Notes](#notes)
 
 ---
@@ -188,7 +188,7 @@ foreach ($s in 0, 1) { $d = "data\unet\loss_all\wall10\f1_pretrained_s$s"; New-I
 ..\.venv\Scripts\python.exe loss_study.py --data data\dataset\train --test data\dataset\test --plain data\unet\plain_all --loss data\unet\loss_all
 ```
 
-## Ride-height sweep of a new wing
+## Ride-height sweeps of new wings
 
 The NACA 4412 at 12 ride heights and in free air
 ([A new wing](11-naca4412-sweep.md)). It runs inside the container, 4 runs at
@@ -202,6 +202,15 @@ all the samples from the free-air model (from the Kaggle output above):
 ```powershell
 cd ground_effect
 ..\.venv\Scripts\python.exe sweep_report.py --model data\unet\learning_curve_wall\f1_pretrained_s0\model.pt data\unet\learning_curve_wall\f1_pretrained_s1\model.pt --plot ..\results\sweep_naca4412.png --csv ..\results\sweep_naca4412.csv
+```
+The Tyrrell 026 ([The F1 wing](12-tyrrell026-sweep.md)) goes the same way, in
+about 30 minutes. It needs the wing's file, as the validation does (see
+above):
+```bash
+bash sweep_tyrrell026.sh
+```
+```powershell
+..\.venv\Scripts\python.exe sweep_report.py --sweep data\sweep_tyrrell026 --model data\unet\learning_curve_wall\f1_pretrained_s0\model.pt data\unet\learning_curve_wall\f1_pretrained_s1\model.pt --plot ..\results\sweep_tyrrell026.png --csv ..\results\sweep_tyrrell026.csv
 ```
 
 ## Notes

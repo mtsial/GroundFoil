@@ -16,7 +16,9 @@ airfoils it has not seen with a 1.4% error, against 20% for the free-air
 model used as it is. The downforce computed from its pressure is off by
 6.2%, with a loss that counts the cells next to the wing more (9.9% without).
 On a wing it has never seen, the NACA 4412 at 11 ride heights, it predicts
-the downforce within 5% and finds the ride height of maximum downforce.
+the downforce within 5% and finds the ride height of maximum downforce. On
+the F1 wing of the wind-tunnel tests, the Tyrrell 026, it gets the shape of
+the curve but 10–19% too little downforce.
 
 - Thuerey et al.'s paper: https://arxiv.org/abs/1810.08217
 - Their code: https://github.com/thunil/Deep-Flow-Prediction (Apache-2.0)
@@ -25,7 +27,7 @@ Words used here are explained in the [glossary](docs/glossary.md).
 
 ## Workflow
 
-The study in eleven steps, each with its own page:
+The study in twelve steps, each with its own page:
 
 1. **[Reproduction](docs/01-reproduction.md):** we first ran the original
    free-air study on current software, to start from a working pipeline and a
@@ -59,10 +61,13 @@ The study in eleven steps, each with its own page:
 11. **[A new wing](docs/11-naca4412-sweep.md):** the NACA 4412 at 12 ride
     heights. The U-Net, which never saw it, predicts the downforce within 5%
     and puts its peak at the same height as the CFD.
+12. **[The F1 wing](docs/12-tyrrell026-sweep.md):** the Tyrrell 026 at the
+    tunnel's ride heights. The U-Net gets the shape of the curve but 10–19%
+    too little downforce: it misses part of the suction peak.
 
-**Next:** the Tyrrell 026 wing at the wind tunnel's ride heights (CFD, the
-U-Net and the tunnel); figures of predicted and simulated flow fields. All
-commands are in [How to run it](docs/howto.md).
+**Next:** four more batches of 1000 runs (about 6,200 training samples),
+then the learning curve and both sweeps again; figures of predicted and
+simulated flow fields. All commands are in [How to run it](docs/howto.md).
 
 ## What the network learns
 
@@ -85,7 +90,8 @@ the simulated pressure and velocity.*
 | Where steady RANS converges | Cl becomes steady in 86% of the dataset's runs; close to the ground the flow separates, and part of the range has no steady solution | [Step 6](docs/06-parameter-scan.md) |
 | U-Net in ground effect | 1.4% error on 30 unseen airfoils with 3,096 training samples, still falling with more data (the free-air model as it is: 20%) | [Steps 8 and 10](docs/10-all-data.md) |
 | Downforce from the U-Net | 6.2% error with a loss weighted next to the wing (plain loss: 9.9%) | [Steps 9 and 10](docs/10-all-data.md) |
-| A wing the U-Net has not seen | NACA 4412 at 11 ride heights: downforce within 5%, peak at the same height as the CFD | [Step 11](docs/11-naca4412-sweep.md) |
+| Unseen wing: NACA 4412 | at 11 ride heights: downforce within 5%, peak at the same height as the CFD | [Step 11](docs/11-naca4412-sweep.md) |
+| Unseen wing: Tyrrell 026 (F1) | at the tunnel's 9 ride heights: the shape of the curve right, the downforce 10–19% low | [Step 12](docs/12-tyrrell026-sweep.md) |
 
 ---
 
@@ -113,7 +119,7 @@ checks, the dataset and the training) is in [How to run it](docs/howto.md).
 
 ```
 README.md                   this page: summary, the steps, results, quick start
-docs/                       one page per step (01-reproduction.md to 11-naca4412-sweep.md), howto.md, glossary.md, references.md
+docs/                       one page per step (01-reproduction.md to 12-tyrrell026-sweep.md), howto.md, glossary.md, references.md
 Dockerfile                  OpenFOAM v2606 + gmsh + Python environment
 patches/openfoam-v2606.patch  fixes to the original code for OpenFOAM v2606
 scripts/view_sample.py      plots all six channels of a training sample
@@ -150,7 +156,8 @@ ground_effect/train_unet.py       trains one U-Net (from random weights or from 
 ground_effect/learning_curve.py   trains and tests U-Nets on parts of the data, then the table and figure
 ground_effect/loss_study.py       compares training losses for the downforce: table and figure
 ground_effect/sweep_naca4412.sh   ride-height sweep of the NACA 4412: 12 heights and free air (inside the container)
-ground_effect/sweep_report.py     table and figure of that sweep, with the U-Net's predictions
+ground_effect/sweep_tyrrell026.sh ride-height sweep of the Tyrrell 026 at the tunnel's heights and 10 m/s (inside the container)
+ground_effect/sweep_report.py     table and figure of a sweep, with the U-Net's predictions
 results/                    figures and reproduction results
 Deep-Flow-Prediction/       the original code, which you clone here (see Quick start); not part of this repo
 ```

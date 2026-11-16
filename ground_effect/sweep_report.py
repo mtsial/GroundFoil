@@ -138,6 +138,7 @@ def plot(rows, path):
     bad = [r for r in rows if r["h"] is not None and not r["converged"]]
     unet = [r for r in ok if r.get("unet")]
     fig, axes = plt.subplots(1, 2, figsize=(9, 4.2))
+    right = 1.05 * max(r["h"] for r in rows if r["h"] is not None)
     handles = {}
     for ax, key, ylabel in zip(axes, ("downforce", "reversed"),
                                ("downforce coefficient, -Cl", "wing surface with reversed flow (%)")):
@@ -145,7 +146,7 @@ def plot(rows, path):
                                   mec="white", mew=1.2, zorder=3)
         if bad:
             handles["bad"], = ax.plot([r["h"] for r in bad], [r[key] for r in bad], "x", ms=8, mew=2, color=RED)
-        ax.set(xlabel="ride height h/c", ylabel=ylabel, xlim=(0, 0.63))
+        ax.set(xlabel="ride height h/c", ylabel=ylabel, xlim=(0, right))
         ax.grid(color=GRID, lw=0.6)
     ax = axes[0]
     labels = {"cfd": "CFD, OpenFOAM's force", "bad": "CFD, Cl not steady (left out)"}
@@ -180,7 +181,9 @@ def plot(rows, path):
     fig.legend([handles[k] for k in order], [labels[k] for k in order], loc="lower center", ncol=2, frameon=False,
                fontsize=8)
     a = rows[0]
-    name = a["airfoil"].upper().replace("NACA", "NACA ") if a["airfoil"].lower().startswith("naca") else a["airfoil"]
+    name = a["airfoil"].lower()
+    name = (name.upper().replace("NACA", "NACA ") if name.startswith("naca") else
+            "Tyrrell 026" if name.startswith("tyrrell026") else a["airfoil"])
     fig.suptitle(f"{name} upside down at {a['alpha']:g} deg and {a['U']:g} m/s "
                  f"(Re {a['U'] * 1e5 / 1e6:g} million), not among the U-Net's airfoils", fontsize=10)
     fig.tight_layout(rect=(0, 0.035 * ((len(order) + 1) // 2) + 0.02, 1, 1))  # room for the legend's rows
