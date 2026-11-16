@@ -101,7 +101,11 @@ reports run on Windows):
 cd /work/ground_effect
 bash param_scan.sh     # 200 random runs, 4 at a time (4 hours), with the scan's settings
 bash clip_test.sh      # nuTilda clipping and continued runs: 20 runs (45 minutes); skips runs already done
-bash dataset.sh        # the dataset: 1000 runs, 4 at a time (about 21-22 hours; 8 at a time is no faster here)
+# the training set: 4 x 1000 runs, about 23 hours each (8 at a time is no faster here than 4)
+JOBS=8 bash dataset.sh                                  # runs 1-1000: seeds 2000-2007, 8 at a time
+SEED=3000 bash dataset.sh                               # runs 1001-2000: seeds 3000-3003, 4 at a time
+SEED=4000 bash dataset.sh && SEED=5000 bash dataset.sh  # runs 2001-4000, one 1000 after the other
+# the test set: 120 runs on the 30 test airfoils, seeds 9000-9003 (3 hours)
 OUT=data/dataset/test AIRFOILS=../data/airfoil_database_test_smooth RUNS=120 SEED=9000 WORKER=300 bash dataset.sh
 ```
 ```powershell

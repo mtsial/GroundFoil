@@ -84,10 +84,10 @@ samples and the range of the seeds; `loss_study.py`):
   10.3% for the plain loss), and its field error is as low as any (1.51%,
   output 0 in the solid).
 
-**Next:** more training runs (about 870 samples per 1000 runs); then the
-learning curve again with the wall weighting; ride-height sweeps of two
-airfoils the U-Net has not seen, the Tyrrell 026 and the NACA 4412; and
-figures of predicted and simulated flow fields.
+**Next:** the learning curve again, with the wall weighting and all 3,436
+samples ([step 7](07-dataset.md)); ride-height sweeps of two airfoils the
+U-Net has not seen, the Tyrrell 026 and the NACA 4412; and figures of
+predicted and simulated flow fields.
 
 ---
 

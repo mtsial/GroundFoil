@@ -12,8 +12,8 @@ wing (downforce gain near the ground within 4%) and finer meshes (0.04–3%).
 Trained on 789 of these simulations, the U-Net predicts the flow around 30
 airfoils it has not seen with a 1.8% error, against 24% for the free-air
 model used as it is. The downforce computed from its pressure is off by 11%,
-and by 7.7% with a loss that counts the cells next to the wing more. More
-simulations are being made.
+and by 7.7% with a loss that counts the cells next to the wing more. The full
+dataset, 3,436 simulations, is complete; training on it is next.
 
 - Paper: https://arxiv.org/abs/1810.08217
 - Original code: https://github.com/thunil/Deep-Flow-Prediction (Apache-2.0)
@@ -42,8 +42,8 @@ The study in nine steps, each with its own page:
    files (1,462 are used).
 6. **[Parameter scan](docs/06-parameter-scan.md):** 200 trial runs showed where
    steady RANS converges and set the rules for keeping a run.
-7. **[The dataset](docs/07-dataset.md):** 2000 runs so far (1,716 samples), and
-   a test set of 102 samples on 30 airfoils kept out of training.
+7. **[The dataset](docs/07-dataset.md):** 4000 runs (3,436 samples on 1,286
+   airfoils), and a test set of 102 samples on 30 airfoils kept out of training.
 8. **[U-Net learning curve](docs/08-unet-learning-curve.md):** with 789 samples
    the U-Net predicts airfoils it has not seen with a 1.8% error, against 24%
    for the free-air model as it is.
@@ -51,7 +51,7 @@ The study in nine steps, each with its own page:
    pressure is off by 11%, and by 7.7% with a loss that weights the cells next
    to the wing.
 
-**Now:** 2000 more runs. **Next:** the learning curve again with the new loss;
+**Next:** the learning curve with all 3,436 samples and the new loss;
 ride-height sweeps of two airfoils the U-Net has not seen (the Tyrrell 026 and
 the NACA 4412); figures of predicted and simulated flow fields. All commands
 are in [How to run it](docs/howto.md).
