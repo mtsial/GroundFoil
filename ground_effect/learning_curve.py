@@ -18,6 +18,8 @@ does two runs at a time):
     python learning_curve.py --data <train folder> --test <test folder> --pretrained <long80k_modelG> --out <results folder>
 Only the table and the figure, from finished runs (for example downloaded from Kaggle):
     ..\\.venv\\Scripts\\python.exe learning_curve.py --out data\\unet\\learning_curve --report-only --plot ..\\results\\learning_curve.png
+The figure shows the error of the original test script by default (all three fields, pressure,
+velocity); --measures all_zeroed p_near_wing cl shows the downforce measures of train_unet.py instead.
 """
 import argparse
 import glob
@@ -29,6 +31,10 @@ import numpy as np
 STARTS = ("scratch", "pretrained")
 COLORS = {"scratch": "#2a78d6", "pretrained": "#eb6834"}  # categorical slots 1 and 2, as in the other reports
 NAMES = {"scratch": "from random weights", "pretrained": "from the free-air model"}
+MEASURES = {"all": "all three fields", "p": "pressure", "v": "velocity",  # the panels of the figure
+            "all_zeroed": "all fields, output 0 in the solid", "p_near_wing": "pressure next to the wing",
+            "cl": "downforce (Cl)"}
+TITLE = "U-Net error in ground effect against the amount of training data"
 COLUMNS = ["run", "start", "fraction", "n_train", "seed", "iterations", "train_minutes", "val_p", "val_v", "val_all",
            "test_p", "test_v", "test_all", "val_cl", "test_cl", "val_all_zeroed", "test_all_zeroed", "val_p_near_wing",
            "test_p_near_wing", "best_iteration", "best_val_all", "best_test_all"]
@@ -48,6 +54,10 @@ def parse(argv=None):
     ap.add_argument("--iterations", type=int, default=80000, help="training iterations of each run (default 80000)")
     ap.add_argument("--report-only", action="store_true", help="no training: only the table and the figure")
     ap.add_argument("--plot", help="draw the learning curve into this image")
+    ap.add_argument("--measures", nargs="+", choices=tuple(MEASURES), default=["all", "p", "v"],
+                    help="the errors in the figure, one panel each (default all p v; see train_unet.py for "
+                         "all_zeroed, p_near_wing and cl)")
+    ap.add_argument("--title", default=TITLE, help="title of the figure")
     ap.add_argument("--lr", type=float, default=0.0006)
     ap.add_argument("--batch", type=int, default=10)
     ap.add_argument("--val-percent", type=float, default=10)
@@ -217,7 +227,7 @@ def table(rows, which):
                   f"{extra(mean)}   " + " ".join(f"{100 * r[which + '_all']:.2f}" for r in sel))
 
 
-def plot(rows, which, path):
+def plot(rows, which, path, measures=("all", "p", "v"), title=TITLE):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -228,9 +238,10 @@ def plot(rows, which, path):
     ink, grid = "#333333", "#d9d9d9"
     plt.rcParams.update({"axes.edgecolor": ink, "axes.labelcolor": ink, "xtick.color": ink,
                          "ytick.color": ink, "text.color": ink, "font.size": 9})
-    fig, axes = plt.subplots(1, 3, figsize=(10, 3.6))
+    fig, axes = plt.subplots(1, len(measures), figsize=(10 * len(measures) / 3, 3.6), squeeze=False)
+    axes = axes[0]
     zero = [r for r in rows if r["start"] == "zero-shot"]
-    for ax, k, title in zip(axes, ("all", "p", "v"), ("all three fields", "pressure", "velocity")):
+    for ax, k in zip(axes, measures):
         for start in STARTS:
             g = groups(rows, f"{which}_{k}")[start]
             if not g:
@@ -242,7 +253,7 @@ def plot(rows, which, path):
                     mec="white", mew=1.2, label=NAMES[start])
         if zero:
             ax.axhline(100 * zero[0][f"{which}_{k}"], color=ink, lw=1, ls="--", label="free-air model, not trained on these")
-        ax.set(xscale="log", yscale="log", xlabel="training samples", title=title)
+        ax.set(xscale="log", yscale="log", xlabel="training samples", title=MEASURES[k])
         ax.xaxis.set_major_locator(FixedLocator(sizes))  # a tick at each number of samples
         ax.xaxis.set_minor_locator(NullLocator())
         ax.yaxis.set_major_locator(LogLocator(subs=(1, 2, 5)))  # ... 1, 2, 5, 10, 20, 50 ... %
@@ -252,7 +263,7 @@ def plot(rows, which, path):
         ax.grid(color=grid, lw=0.6)
     axes[0].set_ylabel(f"error on the {which} samples (%)")
     axes[0].legend(fontsize=8, frameon=False)
-    fig.suptitle("U-Net error in ground effect against the amount of training data", fontsize=10)
+    fig.suptitle(title, fontsize=10)
     fig.tight_layout()
     fig.savefig(path, dpi=110)
     print("saved", path)
@@ -277,7 +288,7 @@ def main(argv=None):
     if which == "test":
         table(rows, "val")
     if args.plot:
-        plot(rows, which, args.plot)
+        plot(rows, which, args.plot, args.measures, args.title)
 
 
 if __name__ == "__main__":

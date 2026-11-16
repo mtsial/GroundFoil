@@ -39,7 +39,7 @@ closer to the ground: 28% for h/c 0.05–0.08, 21% for h/c 0.37–0.6.
 runs did not converge and 13 failed): 789 for training and 78 for
 validation. The test set, 120 runs on the 30 test airfoils, gave 102 samples
 (13 did not converge and 5 failed). The other 3000 runs
-([2,569 more samples](07-dataset.md)) are not used here yet.
+([2,569 more samples](07-dataset.md)) are used in [step 10](10-all-data.md).
 
 ## Learning curve
 
@@ -68,7 +68,7 @@ points at most):
   velocity 1.45%). As in free air, the pressure is the hardest field.
 - **More data still helps.** From 394 to 789 samples the error drops by
   13–14%, and the curve does not level off yet. All 4000 runs give 3,096
-  training samples, almost four times as many.
+  training samples, almost four times as many ([step 10](10-all-data.md)).
 - **The free-air model helps most when data are scarce.** With 99 samples,
   starting from it lowers the error from 3.59 to 3.19%, and it is better on 78
   of the 102 test samples. With 197–789 samples it is ahead by 0.15 points,

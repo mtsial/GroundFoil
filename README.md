@@ -11,11 +11,12 @@ reproduced on current software: OpenFOAM v2606, gmsh 4 and Docker on Windows
 checked against high-resolution LES (skin friction within 6–7%), wind-tunnel
 tests of an F1 wing (downforce gain near the ground within 4%) and finer meshes
 (0.04–3%).
-Trained on 789 of these simulations, the U-Net predicts the flow around 30
-airfoils it has not seen with a 1.8% error, against 24% for the free-air
-model used as it is. The downforce computed from its pressure is off by 11%,
-and by 7.7% with a loss that counts the cells next to the wing more. The full
-dataset, 3,436 simulations, is complete; training on it is next.
+Trained on 3,096 of these simulations, the U-Net predicts the flow around 30
+airfoils it has not seen with a 1.4% error, against 20% for the free-air
+model used as it is. The downforce computed from its pressure is off by
+6.2%, with a loss that counts the cells next to the wing more (9.9% without).
+On a wing it has never seen, the NACA 4412 at 11 ride heights, it predicts
+the downforce within 5% and finds the ride height of maximum downforce.
 
 - Thuerey et al.'s paper: https://arxiv.org/abs/1810.08217
 - Their code: https://github.com/thunil/Deep-Flow-Prediction (Apache-2.0)
@@ -24,7 +25,7 @@ Words used here are explained in the [glossary](docs/glossary.md).
 
 ## Workflow
 
-The study in nine steps, each with its own page:
+The study in eleven steps, each with its own page:
 
 1. **[Reproduction](docs/01-reproduction.md):** we first ran the original
    free-air study on current software, to start from a working pipeline and a
@@ -52,11 +53,16 @@ The study in nine steps, each with its own page:
 9. **[Downforce](docs/09-downforce.md):** the downforce from the predicted
    pressure is off by 11%, and by 7.7% with a loss that weights the cells next
    to the wing.
+10. **[All the data](docs/10-all-data.md):** with all 3,096 training samples
+    and the weighted loss, the downforce error falls to 6.2% and the field
+    error to 1.4%. Both still fall as samples are added.
+11. **[A new wing](docs/11-naca4412-sweep.md):** the NACA 4412 at 12 ride
+    heights. The U-Net, which never saw it, predicts the downforce within 5%
+    and puts its peak at the same height as the CFD.
 
-**Next:** the learning curve with all 3,436 samples and the new loss;
-ride-height sweeps of two airfoils the U-Net has not seen (the Tyrrell 026 and
-the NACA 4412); figures of predicted and simulated flow fields. All commands
-are in [How to run it](docs/howto.md).
+**Next:** the Tyrrell 026 wing at the wind tunnel's ride heights (CFD, the
+U-Net and the tunnel); figures of predicted and simulated flow fields. All
+commands are in [How to run it](docs/howto.md).
 
 ## What the network learns
 
@@ -77,8 +83,9 @@ the simulated pressure and velocity.*
 | Mesh study | numerical uncertainty of the downforce 0.04–3%, largest closest to the ground | [Steps 3 and 4](docs/03-mesh-study.md) |
 | Airfoil shapes | 1,462 of the 1,497 UIUC files smoothed: pressure wiggles above 0.1 in 453 files before, in none after | [Step 5](docs/05-airfoil-shapes.md) |
 | Where steady RANS converges | Cl becomes steady in 86% of the dataset's runs; close to the ground the flow separates, and part of the range has no steady solution | [Step 6](docs/06-parameter-scan.md) |
-| U-Net in ground effect | 1.8% error on 30 unseen airfoils with 789 training samples (the free-air model as it is: 24%) | [Step 8](docs/08-unet-learning-curve.md) |
-| Downforce from the U-Net | 11% error; 7.7% with a loss weighted next to the wing | [Step 9](docs/09-downforce.md) |
+| U-Net in ground effect | 1.4% error on 30 unseen airfoils with 3,096 training samples, still falling with more data (the free-air model as it is: 20%) | [Steps 8 and 10](docs/10-all-data.md) |
+| Downforce from the U-Net | 6.2% error with a loss weighted next to the wing (plain loss: 9.9%) | [Steps 9 and 10](docs/10-all-data.md) |
+| A wing the U-Net has not seen | NACA 4412 at 11 ride heights: downforce within 5%, peak at the same height as the CFD | [Step 11](docs/11-naca4412-sweep.md) |
 
 ---
 
@@ -106,7 +113,7 @@ checks, the dataset and the training) is in [How to run it](docs/howto.md).
 
 ```
 README.md                   this page: summary, the steps, results, quick start
-docs/                       one page per step (01-reproduction.md to 09-downforce.md), howto.md, glossary.md, references.md
+docs/                       one page per step (01-reproduction.md to 11-naca4412-sweep.md), howto.md, glossary.md, references.md
 Dockerfile                  OpenFOAM v2606 + gmsh + Python environment
 patches/openfoam-v2606.patch  fixes to the original code for OpenFOAM v2606
 scripts/view_sample.py      plots all six channels of a training sample
@@ -142,6 +149,8 @@ ground_effect/unet_data.py        loads and normalises the ground-effect samples
 ground_effect/train_unet.py       trains one U-Net (from random weights or from the free-air model) and tests it
 ground_effect/learning_curve.py   trains and tests U-Nets on parts of the data, then the table and figure
 ground_effect/loss_study.py       compares training losses for the downforce: table and figure
+ground_effect/sweep_naca4412.sh   ride-height sweep of the NACA 4412: 12 heights and free air (inside the container)
+ground_effect/sweep_report.py     table and figure of that sweep, with the U-Net's predictions
 results/                    figures and reproduction results
 Deep-Flow-Prediction/       the original code, which you clone here (see Quick start); not part of this repo
 ```

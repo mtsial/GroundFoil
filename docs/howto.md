@@ -16,6 +16,7 @@ dataset, and the training on Kaggle.
 - [Airfoil smoothing (on Windows)](#airfoil-smoothing-on-windows)
 - [Parameter scan and dataset](#parameter-scan-and-dataset)
 - [Training the U-Net](#training-the-u-net)
+- [Ride-height sweep of a new wing](#ride-height-sweep-of-a-new-wing)
 - [Notes](#notes)
 
 ---
@@ -166,6 +167,41 @@ the table and the figure:
 ```powershell
 cd ground_effect
 ..\.venv\Scripts\python.exe loss_study.py --data data\dataset\train --test data\dataset\test --plain data\unet\learning_curve --loss data\unet\loss --plot ..\results\ground_loss_study.png
+```
+
+The learning curve with all the data ([All the data](10-all-data.md)) ran
+in one notebook on the dataset version with all 4000 runs: the weighted loss
+on 3.125–100% of the samples, then the plain loss on all of them (about 5
+hours):
+```python
+!python learning_curve.py --data {data}/train --test {data}/test --pretrained {model} --gpus 2 --wall-weight 10 --fractions 0.03125 0.0625 0.125 0.25 0.5 1 --out /kaggle/working/learning_curve_wall --plot /kaggle/working/learning_curve_wall.png
+!python learning_curve.py --data {data}/train --test {data}/test --pretrained {model} --gpus 2 --fractions 1 --starts pretrained --out /kaggle/working/plain_all
+```
+Put the folders `learning_curve_wall` and `plain_all` from its output into
+`ground_effect/data/unet/`. Then make the figure, and compare the two losses
+again. `loss_study.py` wants one folder per loss, so first copy the two
+weighted runs with all the samples into `loss_all/wall10/`:
+```powershell
+cd ground_effect
+..\.venv\Scripts\python.exe learning_curve.py --out data\unet\learning_curve_wall --report-only --measures all_zeroed p_near_wing cl --plot ..\results\ground_learning_curve_all.png --title "U-Net error in ground effect against the amount of training data, loss weighted 11 times next to the wing"
+foreach ($s in 0, 1) { $d = "data\unet\loss_all\wall10\f1_pretrained_s$s"; New-Item -ItemType Directory -Force $d | Out-Null; Copy-Item data\unet\learning_curve_wall\f1_pretrained_s$s\model.pt, data\unet\learning_curve_wall\f1_pretrained_s$s\summary.json $d }
+..\.venv\Scripts\python.exe loss_study.py --data data\dataset\train --test data\dataset\test --plain data\unet\plain_all --loss data\unet\loss_all
+```
+
+## Ride-height sweep of a new wing
+
+The NACA 4412 at 12 ride heights and in free air
+([A new wing](11-naca4412-sweep.md)). It runs inside the container, 4 runs at
+a time, in about 20 minutes. Runs that already have a sample are skipped:
+```bash
+cd /work/ground_effect
+bash sweep_naca4412.sh
+```
+Then, on Windows, the table and the figure, with the two U-Nets trained on
+all the samples from the free-air model (from the Kaggle output above):
+```powershell
+cd ground_effect
+..\.venv\Scripts\python.exe sweep_report.py --model data\unet\learning_curve_wall\f1_pretrained_s0\model.pt data\unet\learning_curve_wall\f1_pretrained_s1\model.pt --plot ..\results\sweep_naca4412.png --csv ..\results\sweep_naca4412.csv
 ```
 
 ## Notes
