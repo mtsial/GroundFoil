@@ -49,6 +49,18 @@ Other references used in the extension:
   model", Seventh International Conference on Computational Fluid Dynamics
   (ICCFD7), paper ICCFD7-1902, 2012 (negative values of the model's variable,
   and the "SA-neg" form that handles them; see the parameter scan).
+- X. Guo, W. Li and F. Iorio, "Convolutional neural networks for steady flow
+  approximation", *Proceedings of the 22nd ACM SIGKDD International
+  Conference on Knowledge Discovery and Data Mining*, 481–490, 2016 (the
+  signed distance to the shape as the input of a network for flow fields).
+- S. Bhatnagar, Y. Afshar, S. Pan, K. Duraisamy and S. Kaushik, "Prediction
+  of aerodynamic flow fields using convolutional neural networks",
+  *Computational Mechanics* 64(2), 525–545, 2019 (the same for RANS flows
+  around airfoils).
+- M. D. Ribeiro, A. Rehman, S. Ahmed and A. Dengel, "DeepCFD: Efficient
+  steady-state laminar flow approximation with deep convolutional neural
+  networks", arXiv:2004.08826, 2020 (a U-Net with the signed distance and a
+  flow-region channel as inputs).
 
 Airfoil coordinates come from the UIUC Airfoil Coordinates Database
 (https://m-selig.ae.illinois.edu/ads/coord_database.html).

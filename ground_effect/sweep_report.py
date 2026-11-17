@@ -7,7 +7,7 @@ and --plot draws the figure, --csv writes the table.
 ground effect whose Cl became steady, and Cl comes from the predicted pressure on the 128 x 128
 grid (unet_data.lift_weights). It is compared with Cl from the simulated pressure on the same grid,
 which is a few percent off OpenFOAM's Cl; with several models, the figure shows their mean and
-their range. The free-air run is left out: every training sample has a ground. Models trained
+their range (--label names them in the legend). The free-air run is left out: every training sample has a ground. Models trained
 with --distance get the signed distance as input 1, rebuilt from the airfoil files
 (unet_data.AIRFOIL_DIRS: the Tyrrell 026 needs data/airfoils/tyrrell026.dat).
 
@@ -132,7 +132,7 @@ def write_csv(rows, path):
     print("saved", path)
 
 
-def plot(rows, path):
+def plot(rows, path, label="U-Net, from its predicted pressure"):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -164,7 +164,7 @@ def plot(rows, path):
         line, = ax.plot(h, [mean(r["unet"]) for r in unet], "-o", lw=2, ms=6, color=ORANGE, mec="white", mew=1.2,
                         zorder=4)
         n = len(unet[0]["unet"])
-        handles["unet"], labels["unet"] = line, "U-Net, from its predicted pressure"
+        handles["unet"], labels["unet"] = line, label
         if n > 1:
             band = ax.fill_between(h, [min(r["unet"]) for r in unet], [max(r["unet"]) for r in unet], color=ORANGE,
                                    alpha=0.25, lw=0)
@@ -203,6 +203,7 @@ def main(argv=None):
     ap.add_argument("--model", nargs="+", help="U-Nets (model.pt of train_unet.py) to compare with the CFD")
     ap.add_argument("--plot", help="draw the figure into this image")
     ap.add_argument("--csv", help="write the table into this file")
+    ap.add_argument("--label", default="U-Net, from its predicted pressure", help="the U-Net's name in the legend")
     args = ap.parse_args(argv)
     rows = load(args.sweep)
     if not rows:
@@ -213,7 +214,7 @@ def main(argv=None):
     if args.csv:
         write_csv(rows, args.csv)
     if args.plot:
-        plot(rows, args.plot)
+        plot(rows, args.plot, args.label)
 
 
 if __name__ == "__main__":

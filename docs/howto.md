@@ -188,6 +188,29 @@ foreach ($s in 0, 1) { $d = "data\unet\loss_all\wall10\f1_pretrained_s$s"; New-I
 ..\.venv\Scripts\python.exe loss_study.py --data data\dataset\train --test data\dataset\test --plain data\unet\plain_all --loss data\unet\loss_all
 ```
 
+The distance input ([The exact wing shape](13-distance-input.md)) is built
+from the airfoil files, so Kaggle needs them too. Zip the smoothed files, in
+the project folder (`tar` comes with Windows):
+```powershell
+tar -a -cf groundfoil_airfoils.zip -C data airfoil_database_smooth airfoil_database_test_smooth
+```
+Make a private Kaggle dataset from `groundfoil_airfoils.zip` and add it to
+the notebook next to the dataset of samples ("Add Input"). Then, with
+`model` and `data` found as above, the 4 runs with all the samples and the
+wall weighting (under an hour):
+```python
+smooth = glob.glob("/kaggle/input/**/airfoil_database_smooth", recursive=True)[0]
+test_smooth = glob.glob("/kaggle/input/**/airfoil_database_test_smooth", recursive=True)[0]
+!python learning_curve.py --data {data}/train --test {data}/test --pretrained {model} --gpus 2 --fractions 1 --wall-weight 10 --distance --airfoil-dirs {smooth} {test_smooth} --out /kaggle/working/distance
+```
+Put the folder `distance` from its output into `ground_effect/data/unet/`.
+Then the table and the figure, which compare its runs with those of
+`learning_curve_wall` (both starts):
+```powershell
+cd ground_effect
+..\.venv\Scripts\python.exe loss_study.py --data data\dataset\train --test data\dataset\test --plain data\unet\plain_all --loss data\unet\learning_curve_wall data\unet\distance --starts pretrained scratch --csv data\unet\distance\loss_study.csv --title "The distance input" --plot ..\results\ground_distance_input.png
+```
+
 ## Ride-height sweeps of new wings
 
 The NACA 4412 at 12 ride heights and in free air
@@ -211,6 +234,13 @@ bash sweep_tyrrell026.sh
 ```
 ```powershell
 ..\.venv\Scripts\python.exe sweep_report.py --sweep data\sweep_tyrrell026 --model data\unet\learning_curve_wall\f1_pretrained_s0\model.pt data\unet\learning_curve_wall\f1_pretrained_s1\model.pt --plot ..\results\sweep_tyrrell026.png --csv ..\results\sweep_tyrrell026.csv
+```
+Both sweeps with the two models trained from random weights with the
+distance input ([The exact wing shape](13-distance-input.md)); for the
+Tyrrell 026, the distance is built from the same wing file:
+```powershell
+..\.venv\Scripts\python.exe sweep_report.py --model data\unet\distance\f1_scratch_s0\model.pt data\unet\distance\f1_scratch_s1\model.pt --label "U-Net with the distance input, from random weights" --plot ..\results\sweep_naca4412_distance.png --csv ..\results\sweep_naca4412_distance.csv
+..\.venv\Scripts\python.exe sweep_report.py --sweep data\sweep_tyrrell026 --model data\unet\distance\f1_scratch_s0\model.pt data\unet\distance\f1_scratch_s1\model.pt --label "U-Net with the distance input, from random weights" --plot ..\results\sweep_tyrrell026_distance.png --csv ..\results\sweep_tyrrell026_distance.csv
 ```
 
 ## Notes

@@ -28,6 +28,10 @@ Words used on these pages.
 | Moving ground | The ground moves at the air's speed, as the road does under a car |
 | Separation | Where the air stops following the wing's surface; behind it the flow turns back and becomes unsteady |
 | Sample | One simulation, stored as six 128 × 128 images: 3 inputs (the air's speed, and where the wing and the ground are) and 3 outputs (pressure and the two velocity components) |
+| Mask | The input that shows where the wing and the ground are: each cell of the 128 × 128 grid is solid or air |
+| Signed distance | For each cell, the distance to the nearest surface (the wing or the ground), negative inside the wing and below the ground. Since step 13, an input of the U-Net: it gives the exact shape, finer than the cells |
 | U-Net | The type of neural network used: it turns input images into output images |
 | Surrogate | A fast model that replaces the slow simulation |
 | Loss (L1) | What training makes small: how far the network's output is from the simulation. L1 is the mean absolute difference |
+| Random weights, free-air model | The two ways a training run starts: from random numbers in the network, or from the U-Net trained on the free-air data of step 1 |
+| Wilcoxon test, p | A test of whether one model is closer to the simulation than another on the same samples. p is the chance of a difference this consistent if the two were equally good: small p, a real difference |

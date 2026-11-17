@@ -1,6 +1,6 @@
 # 12. The F1 wing: the Tyrrell 026 at the tunnel's ride heights
 
-[README](../README.md) · ← [11. A new wing](11-naca4412-sweep.md) · [Workflow](../README.md#workflow)
+[README](../README.md) · ← [11. A new wing](11-naca4412-sweep.md) · [13. The exact wing shape](13-distance-input.md) → · [Workflow](../README.md#workflow)
 
 We ran the Tyrrell 026 wing of the wind-tunnel validation
 ([step 4](04-wind-tunnel.md)) at the conditions of the dataset, then asked the
@@ -102,4 +102,4 @@ figures of predicted and simulated flow fields.
 
 ---
 
-[README](../README.md) · ← [11. A new wing](11-naca4412-sweep.md) · [Workflow](../README.md#workflow)
+[README](../README.md) · ← [11. A new wing](11-naca4412-sweep.md) · [13. The exact wing shape](13-distance-input.md) → · [Workflow](../README.md#workflow)
