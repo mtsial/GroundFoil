@@ -19,6 +19,11 @@ masked points, where p is 0. For an airfoil alone (1-3% of the points masked) th
 mean over the air, but the ground masks 16-47% of the points, so the original mean would shift
 each pressure field by an amount set by the size of the masked area. Here the mean is taken over
 the air only (p_offset="fluid"); p_offset="grid" gives the original.
+
+Optionally (load(distance=True)), input 1, the freestream y velocity, which is always 0 in these
+samples, holds instead the signed distance to the wing and the ground (distance_field): the mask
+shows the shape only to the nearest grid point (1/64 chord), the distance down to the exact
+outline, which is rebuilt from the airfoil file as groundGen.py meshed it (wing_outline).
 """
 import glob
 import os
@@ -74,13 +79,72 @@ def denormalise(targets, speed):
     return out
 
 
-def load(folder, p_offset="fluid", exclude_clipped=False, files=None):
+AIRFOIL_DIRS = tuple(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", k)
+                     for k in ("airfoil_database_smooth", "airfoil_database_test_smooth", "airfoils"))
+
+
+def wing_outline(d, airfoil_dirs=AIRFOIL_DIRS):
+    """The outline of the wing of sample d (an open .npz of groundGen.py) as groundGen.py meshed
+    it: the airfoil file <airfoil>.dat from the first of airfoil_dirs that has it (nacaXXXX
+    without a file is built from its formula), turned upside down, rotated and placed by
+    groundGen's own functions. Returns the points (N x 2, the sample's coordinates, closed from
+    the last point back to the first) and the y of the ground (NaN in free air)."""
+    import groundGen  # numpy and the standard library only
+    name = str(d["airfoil"])
+    path = next((p for p in (os.path.join(k, name + ".dat") for k in airfoil_dirs) if os.path.isfile(p)), name)
+    try:
+        ar = groundGen.load_airfoil(path)
+    except OSError:
+        raise SystemExit(f"airfoil file {name}.dat not found in {list(airfoil_dirs)} (see --airfoil-dirs)")
+    if bool(d["bl"]):
+        ar, _ = groundGen.tidy_trailing_edge(ar)
+    free = not np.isfinite(float(d["ground_y"]))
+    h_alpha = float(d["h_alpha"])
+    pts, ground_y = groundGen.place_airfoil(ar, float(d["alpha"]), 0.0 if free else float(d["h"]),
+                                            None if np.isnan(h_alpha) else h_alpha)
+    return pts, (np.nan if free else ground_y)
+
+
+def distance_field(outline, ground_y, res=RES):
+    """Signed distance (in chords) from each grid point to the solid: the wing (outline, a closed
+    polygon) and the ground below y = ground_y (none if NaN). Positive in the air, negative inside
+    the wing and below the ground. res x res, x index first, at the sampled points
+    (groundGen.grid_x, grid_y). The distance to the outline is that to points 0.0005 chords apart
+    along it, so it is within 0.00025 chords of the exact one; more than 0.1 chords away from
+    the wing, points 0.005 chords apart are used (within 0.0025 chords), which is much faster."""
+    from matplotlib.path import Path
+    from scipy.spatial import cKDTree
+    k = np.arange(res)
+    x, y = np.meshgrid((k / res - 0.5) * 2 + 0.5, (k / res - 0.5) * 2, indexing="ij")
+    pts = np.column_stack([x.ravel(), y.ravel()])
+    closed = np.vstack([outline, outline[:1]])
+    s = np.concatenate([[0], np.cumsum(np.hypot(*np.diff(closed, axis=0).T))])
+
+    def along(step):  # points every step chords along the outline
+        t = np.arange(0, s[-1], step)
+        return np.column_stack([np.interp(t, s, closed[:, 0]), np.interp(t, s, closed[:, 1])])
+
+    dist = cKDTree(along(0.0005)).query(pts, distance_upper_bound=0.1)[0]
+    far = ~np.isfinite(dist)  # more than 0.1 chords from the wing
+    dist[far] = cKDTree(along(0.005)).query(pts[far])[0]
+    box = np.all((pts >= outline.min(axis=0)) & (pts <= outline.max(axis=0)), axis=1)  # only these can be inside
+    solid = np.zeros(len(pts), bool)
+    solid[box] = Path(outline).contains_points(pts[box])
+    if np.isfinite(ground_y):
+        dist = np.minimum(dist, np.abs(pts[:, 1] - ground_y))
+        solid |= pts[:, 1] < ground_y
+    return np.where(solid, -dist, dist).reshape(res, res)
+
+
+def load(folder, p_offset="fluid", exclude_clipped=False, files=None, distance=False, airfoil_dirs=AIRFOIL_DIRS):
     """All samples in folder (see sample_files), or only files (paths in folder, as in 'file'), in
     that order; normalised. Returns a dict with 'inputs' and 'targets' (N x 3 x 128 x 128,
     float32), 'file' (path in folder), 'airfoil', 'h' (h/c), 'alpha' (deg), 'U' (m/s) and
     'clipped' (nuTilda still clipped at the end of the run). The original free-air files have
     only the array: there h and alpha are NaN, clipped is False and the airfoil name comes from
-    the file name."""
+    the file name. With distance=True, input 1 is the signed distance of distance_field (in
+    chords) instead of the freestream y velocity (always 0 here); the airfoil files are looked
+    for in airfoil_dirs (see wing_outline)."""
     files = sample_files(folder) if files is None else [os.path.join(folder, *f.split("/")) for f in files]
     if not files:
         raise SystemExit(f"no samples (.npz files) in {folder}")
@@ -91,6 +155,10 @@ def load(folder, p_offset="fluid", exclude_clipped=False, files=None):
     for i, f in enumerate(files):
         with np.load(f) as d:
             data["inputs"][i], data["targets"][i], data["U"][i] = normalise(d["a"], p_offset)
+            if distance:
+                if np.any(data["inputs"][i][1]):
+                    raise SystemExit(f"{f}: input 1 (freestream y velocity) is not 0, so it cannot hold the distance")
+                data["inputs"][i][1] = distance_field(*wing_outline(d, airfoil_dirs))
             data["file"].append(os.path.relpath(f, folder).replace(os.sep, "/"))
             data["airfoil"].append(str(d["airfoil"]) if "airfoil" in d.files else os.path.basename(f).split("_")[0])
             for key in ("h", "alpha"):

@@ -7,7 +7,9 @@ and --plot draws the figure, --csv writes the table.
 ground effect whose Cl became steady, and Cl comes from the predicted pressure on the 128 x 128
 grid (unet_data.lift_weights). It is compared with Cl from the simulated pressure on the same grid,
 which is a few percent off OpenFOAM's Cl; with several models, the figure shows their mean and
-their range. The free-air run is left out: every training sample has a ground.
+their range. The free-air run is left out: every training sample has a ground. Models trained
+with --distance get the signed distance as input 1, rebuilt from the airfoil files
+(unet_data.AIRFOIL_DIRS: the Tyrrell 026 needs data/airfoils/tyrrell026.dat).
 
 On Windows, from the ground_effect folder:
     ..\\.venv\\Scripts\\python.exe sweep_report.py --plot ..\\results\\sweep_naca4412.png --csv ..\\results\\sweep_naca4412.csv
@@ -73,13 +75,17 @@ def add_unet(rows, folder, models):
     offsets = {s.get("p_offset", "fluid") for s in settings}
     if len(offsets) > 1:
         raise SystemExit("the models were trained with different pressure offsets (--p-offset)")
+    p_offset = offsets.pop()
     use = [r for r in rows if r["h"] is not None and r["converged"]]
-    data = unet_data.load(folder, offsets.pop(), files=[r["file"] for r in use])
-    inputs = torch.from_numpy(data["inputs"])
-    for r, h in zip(use, data["h"]):
+    # the samples, without and with the signed distance as input 1 (models trained with --distance)
+    loaded = {distance: unet_data.load(folder, p_offset, files=[r["file"] for r in use], distance=distance)
+              for distance in {bool(s.get("distance")) for s in settings}}
+    for r, h in zip(use, next(iter(loaded.values()))["h"]):
         assert abs(r["h"] - h) < 1e-3, (r["file"], h)
         r["unet"], r["unet_field"] = [], []
     for path, s in zip(models, settings):
+        data = loaded[bool(s.get("distance"))]
+        inputs = torch.from_numpy(data["inputs"])
         net = TurbNetG(channelExponent=s.get("expo", 5))
         net.load_state_dict(torch.load(path, map_location="cpu", weights_only=True))
         pred = predict(net, inputs)

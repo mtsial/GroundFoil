@@ -29,7 +29,11 @@ With --iterations 0 and --pretrained, the model is only tested (the free-air mod
 
 Two additions to the original loss, both off by default, aim at the downforce: --cl-weight adds
 the batch's mean |Cl error| (Cl as above), and --wall-weight weights the L1 loss more on the air
-cells next to the wing.
+cells next to the wing. --distance gives the network the exact shape: input 1 (the freestream y
+velocity, always 0 in these samples) becomes the signed distance to the wing and the ground
+(unet_data.distance_field). With --pretrained, the weights for that input of a model trained
+without it (the free-air model; see trained_with_distance) are set to 0, so that it predicts
+exactly as before: training starts from the same predictions, and the zero-shot test is unchanged.
 
 Example, a short check on the laptop (from the ground_effect folder, Windows):
     ..\\.venv\\Scripts\\python.exe train_unet.py --data data\\dataset\\train --fraction 0.1 --iterations 100 --threads 2 --out data\\unet\\check
@@ -71,10 +75,26 @@ def parse(argv=None):
     ap.add_argument("--wall-weight", type=float, default=0.0,
                     help="weight the L1 loss by 1 + this on the air cells within --wall-cells of the wing (default 0)")
     ap.add_argument("--wall-cells", type=int, default=2, help="see --wall-weight (default 2 grid cells)")
+    ap.add_argument("--distance", action="store_true",
+                    help="input 1 = the signed distance to the wing and the ground instead of the freestream y "
+                         "velocity (always 0 here); needs the airfoil files (--airfoil-dirs)")
+    ap.add_argument("--airfoil-dirs", nargs="+", default=list(unet_data.AIRFOIL_DIRS),
+                    help="folders with the airfoil files, for --distance (default: the smoothed training and "
+                         "test airfoils and data/airfoils of this repository's folder)")
     ap.add_argument("--eval-every", type=int, default=1000, help="validation every this many iterations (default 1000)")
     ap.add_argument("--device", default="auto", help="cuda, cpu or auto (default: cuda if there is a GPU)")
     ap.add_argument("--threads", type=int, help="number of CPU threads for torch (default: all)")
     return ap.parse_args(argv)
+
+
+def trained_with_distance(model_path):
+    """True if the model was trained with --distance, as the summary.json next to it says (a
+    model without one, like the free-air model, was not)."""
+    info = os.path.join(os.path.dirname(model_path), "summary.json")
+    if not os.path.exists(info):
+        return False
+    with open(info) as f:
+        return bool(json.load(f)["settings"].get("distance"))
 
 
 def compute_lr(i, total, min_lr, max_lr):
@@ -159,9 +179,11 @@ def run(args, data=None, test=None):
 
     start = time.time()
     if data is None:
-        data = unet_data.load(args.data, args.p_offset, args.exclude_clipped)
+        data = unet_data.load(args.data, args.p_offset, args.exclude_clipped, distance=args.distance,
+                              airfoil_dirs=args.airfoil_dirs)
     if test is None and args.test:
-        test = unet_data.load(args.test, args.p_offset, args.exclude_clipped)
+        test = unet_data.load(args.test, args.p_offset, args.exclude_clipped, distance=args.distance,
+                              airfoil_dirs=args.airfoil_dirs)
     train, val = split(data, args.val_percent, args.fraction, args.seed)
     log(f"{len(train['file'])} training samples ({args.fraction:g} of {len(data['file']) - len(val['file'])}), "
         f"{len(val['file'])} validation, {len(test['file']) if test else 0} test; device {device}; "
@@ -174,6 +196,10 @@ def run(args, data=None, test=None):
     if args.pretrained:
         net.load_state_dict(torch.load(args.pretrained, map_location=device, weights_only=True))
         log(f"starting from {args.pretrained}")
+        if args.distance and not trained_with_distance(args.pretrained):
+            with torch.no_grad():  # e.g. the free-air model: its input 1 was the freestream y velocity
+                net.layer1.layer1_conv.weight[:, 1] = 0
+            log("input 1 = signed distance; the first layer's weights for it set to 0 (a model trained without it)")
     log(f"{sum(p.numel() for p in net.parameters() if p.requires_grad)} trainable parameters")
 
     to_device = lambda a: torch.from_numpy(a).to(device)

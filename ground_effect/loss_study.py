@@ -45,16 +45,19 @@ def parse(argv=None):
     ap.add_argument("--csv", help="one line per model and sample set (default <loss>/loss_study.csv)")
     ap.add_argument("--plot", help="draw the figure into this image")
     ap.add_argument("--threads", type=int, default=2, help="CPU threads for torch (default 2)")
+    ap.add_argument("--airfoil-dirs", nargs="+", default=list(unet_data.AIRFOIL_DIRS),
+                    help="folders with the airfoil files, for models trained with --distance")
     return ap.parse_args(argv)
 
 
 def label(settings):
-    """A short name for the loss of a run, from its settings."""
+    """A short name for the loss (and the inputs) of a run, from its settings."""
     parts = [f"Cl term {settings['cl_weight']:g}"] if settings.get("cl_weight") else []
     if settings.get("wall_weight"):
         cells = settings["wall_cells"]
         parts.append(f"wall x{1 + settings['wall_weight']:g}, {cells} cell{'s' if cells != 1 else ''}")
-    return " + ".join(parts) or "plain L1"
+    name = " + ".join(parts) or "plain L1"
+    return name + (" + distance input" if settings.get("distance") else "")
 
 
 def losses(args):
@@ -67,26 +70,32 @@ def losses(args):
             with open(path) as f:
                 found.append((name, folder, json.load(f)["settings"]))
     order = lambda x: (x[0] != "plain", bool(x[2].get("wall_weight")), x[2].get("cl_weight", 0),
-                       x[2].get("wall_weight", 0), x[2].get("wall_cells", 0))
+                       x[2].get("wall_weight", 0), x[2].get("wall_cells", 0), bool(x[2].get("distance")))
     return sorted(found, key=order)
 
 
-def samples(args, p_offset):
-    """The validation and test samples of the plain runs (their errors_<set>.csv), normalised."""
+def samples(args, p_offset, distance=False):
+    """The validation and test samples of the plain runs (their errors_<set>.csv), normalised;
+    with distance=True, input 1 is the signed distance (unet_data.load)."""
     sets = {}
     for name, folder in (("val", args.data), ("test", args.test)):
         with open(os.path.join(args.plain, RUN.format(args.seeds[0]), f"errors_{name}.csv")) as f:
             files = [r["file"] for r in csv.DictReader(f)]
-        sets[name] = unet_data.load(folder, p_offset, files=files)
+        sets[name] = unet_data.load(folder, p_offset, files=files, distance=distance, airfoil_dirs=args.airfoil_dirs)
     return sets
 
 
 def test_all(args):
     """One row per loss, seed and sample set, with every measure."""
     found = losses(args)
-    sets = samples(args, found[0][2].get("p_offset", "fluid"))
+    p_offset = found[0][2].get("p_offset", "fluid")
+    loaded = {}  # the samples, without and with the distance input, loaded when first needed
     rows, plain_err = [], {}
     for name, folder, settings in found:
+        distance = bool(settings.get("distance"))
+        if distance not in loaded:
+            loaded[distance] = samples(args, p_offset, distance)
+        sets = loaded[distance]
         for seed in args.seeds:
             run = os.path.join(folder, RUN.format(seed))
             if not os.path.exists(os.path.join(run, "model.pt")):
@@ -135,12 +144,13 @@ def table(rows, which):
     print(f"\n{which} samples (%, mean over the seeds; '0 in solid': 'all' with the output set to 0 inside the wing "
           f"and the ground; 'p at wing': pressure in the air cells next to the wing; 'closer': samples whose Cl is "
           f"closer to the simulation than with the plain loss, each seed):")
-    print(f"  {'loss':24s} {'p':>6s} {'v':>5s} {'all':>5s} {'0 in solid':>10s} {'p at wing':>9s} {'Cl':>6s} {'R2':>5s}  closer")
+    width = max(24, *(len(m["label"]) for m in by_loss(rows).values()))
+    print(f"  {'loss':{width}s} {'p':>6s} {'v':>5s} {'all':>5s} {'0 in solid':>10s} {'p at wing':>9s} {'Cl':>6s} {'R2':>5s}  closer")
     for name, m in by_loss(rows).items():
         s = m[which]
         avg = lambda k: np.mean(s[k])
         closer = "-" if name == "plain" else "/".join(str(c) for c in s["cl_closer"]) + f" of {s['n'][0]}"
-        print(f"  {m['label']:24s} {100 * avg('p'):6.2f} {100 * avg('v'):5.2f} {100 * avg('all'):5.2f} "
+        print(f"  {m['label']:{width}s} {100 * avg('p'):6.2f} {100 * avg('v'):5.2f} {100 * avg('all'):5.2f} "
               f"{100 * avg('all_zeroed'):10.2f} {100 * avg('p_near_wing'):9.2f} {100 * avg('cl'):6.2f} "
               f"{avg('cl_r2'):5.3f}  {closer}")
 

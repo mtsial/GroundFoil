@@ -9,9 +9,9 @@ example f0.25_pretrained_s0/, see train_unet.py for what is in it). Runs that al
 summary.json are not repeated, so after an interruption the same command goes on where it
 stopped. At the end it writes <out>/learning_curve.csv (one line per run) and prints the table
 (with the downforce measures of train_unet.py); --plot also draws the figure. --starts pretrained
-trains only from the free-air model, and --cl-weight, --wall-weight and --wall-cells are passed
-on to train_unet.py (to compare losses at one amount of data, use --fractions 1 and one --out per
-loss, then loss_study.py).
+trains only from the free-air model, and --cl-weight, --wall-weight, --wall-cells, --distance and
+--airfoil-dirs are passed on to train_unet.py (to compare losses or inputs at one amount of data,
+use --fractions 1 and one --out per variant, then loss_study.py).
 
 On a GPU, from the ground_effect folder (see the README for Kaggle; with two GPUs, --gpus 2
 does two runs at a time):
@@ -66,6 +66,8 @@ def parse(argv=None):
     ap.add_argument("--cl-weight", type=float, default=0.0)
     ap.add_argument("--wall-weight", type=float, default=0.0)
     ap.add_argument("--wall-cells", type=int, default=2)
+    ap.add_argument("--distance", action="store_true", help="input 1 = signed distance (see train_unet.py)")
+    ap.add_argument("--airfoil-dirs", nargs="+", help="folders with the airfoil files, for --distance")
     ap.add_argument("--eval-every", type=int, default=1000)
     ap.add_argument("--device", default="auto")
     ap.add_argument("--threads", type=int)
@@ -90,6 +92,8 @@ def runs(args):
     common += ["--exclude-clipped"] if args.exclude_clipped else []
     common += ["--cl-weight", str(args.cl_weight)] if args.cl_weight else []
     common += ["--wall-weight", str(args.wall_weight), "--wall-cells", str(args.wall_cells)] if args.wall_weight else []
+    common += ["--distance"] if args.distance else []
+    common += ["--airfoil-dirs"] + args.airfoil_dirs if args.airfoil_dirs else []
     todo = [("zero_shot", common + ["--pretrained", args.pretrained, "--iterations", "0"])] if args.pretrained else []
     for seed in args.seeds:
         for fraction in args.fractions:
@@ -114,8 +118,11 @@ def train_all(args):
             print(f"{name}: done before, skipped")
             continue
         if data is None:  # load the samples once, for all runs
-            data = unet_data.load(args.data, args.p_offset, args.exclude_clipped)
-            test = unet_data.load(args.test, args.p_offset, args.exclude_clipped) if args.test else None
+            opts = {"distance": args.distance}
+            if args.airfoil_dirs:
+                opts["airfoil_dirs"] = args.airfoil_dirs
+            data = unet_data.load(args.data, args.p_offset, args.exclude_clipped, **opts)
+            test = unet_data.load(args.test, args.p_offset, args.exclude_clipped, **opts) if args.test else None
         print(f"\n===== {name} =====", flush=True)
         train_unet.run(train_unet.parse(argv + ["--out", out]), data, test)
 
