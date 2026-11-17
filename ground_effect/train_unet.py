@@ -31,9 +31,11 @@ Two additions to the original loss, both off by default, aim at the downforce: -
 the batch's mean |Cl error| (Cl as above), and --wall-weight weights the L1 loss more on the air
 cells next to the wing. --distance gives the network the exact shape: input 1 (the freestream y
 velocity, always 0 in these samples) becomes the signed distance to the wing and the ground
-(unet_data.distance_field). With --pretrained, the weights for that input of a model trained
-without it (the free-air model; see trained_with_distance) are set to 0, so that it predicts
-exactly as before: training starts from the same predictions, and the zero-shot test is unchanged.
+(unet_data.distance_field). --distance mask computes that distance from the mask instead
+(unet_data.mask_distance), which shows the shape only to the nearest grid point. With
+--pretrained, the weights for that input of a model trained without it (the free-air model; see
+trained_with_distance) are set to 0, so that it predicts exactly as before: training starts from
+the same predictions, and the zero-shot test is unchanged.
 
 Example, a short check on the laptop (from the ground_effect folder, Windows):
     ..\\.venv\\Scripts\\python.exe train_unet.py --data data\\dataset\\train --fraction 0.1 --iterations 100 --threads 2 --out data\\unet\\check
@@ -75,9 +77,10 @@ def parse(argv=None):
     ap.add_argument("--wall-weight", type=float, default=0.0,
                     help="weight the L1 loss by 1 + this on the air cells within --wall-cells of the wing (default 0)")
     ap.add_argument("--wall-cells", type=int, default=2, help="see --wall-weight (default 2 grid cells)")
-    ap.add_argument("--distance", action="store_true",
+    ap.add_argument("--distance", nargs="?", const="outline", choices=unet_data.DISTANCES,
                     help="input 1 = the signed distance to the wing and the ground instead of the freestream y "
-                         "velocity (always 0 here); needs the airfoil files (--airfoil-dirs)")
+                         "velocity (always 0 here): to the exact outline (--distance, or --distance outline; needs "
+                         "the airfoil files, --airfoil-dirs), or to the solid as the mask shows it (--distance mask)")
     ap.add_argument("--airfoil-dirs", nargs="+", default=list(unet_data.AIRFOIL_DIRS),
                     help="folders with the airfoil files, for --distance (default: the smoothed training and "
                          "test airfoils and data/airfoils of this repository's folder)")
@@ -188,6 +191,9 @@ def run(args, data=None, test=None):
     log(f"{len(train['file'])} training samples ({args.fraction:g} of {len(data['file']) - len(val['file'])}), "
         f"{len(val['file'])} validation, {len(test['file']) if test else 0} test; device {device}; "
         f"loaded in {time.time() - start:.0f} s")
+    if args.distance:
+        log("input 1 = signed distance " + ("from the mask" if unet_data.distance_kind(args.distance) == "mask"
+                                             else "to the exact outline, from the airfoil files"))
     if args.iterations and len(train["file"]) < args.batch:
         raise SystemExit(f"fewer training samples than the batch size ({args.batch})")
 

@@ -66,7 +66,8 @@ def parse(argv=None):
     ap.add_argument("--cl-weight", type=float, default=0.0)
     ap.add_argument("--wall-weight", type=float, default=0.0)
     ap.add_argument("--wall-cells", type=int, default=2)
-    ap.add_argument("--distance", action="store_true", help="input 1 = signed distance (see train_unet.py)")
+    ap.add_argument("--distance", nargs="?", const="outline", choices=("outline", "mask"),
+                    help="input 1 = signed distance, to the exact outline or as the mask shows it (see train_unet.py)")
     ap.add_argument("--airfoil-dirs", nargs="+", help="folders with the airfoil files, for --distance")
     ap.add_argument("--eval-every", type=int, default=1000)
     ap.add_argument("--device", default="auto")
@@ -92,7 +93,7 @@ def runs(args):
     common += ["--exclude-clipped"] if args.exclude_clipped else []
     common += ["--cl-weight", str(args.cl_weight)] if args.cl_weight else []
     common += ["--wall-weight", str(args.wall_weight), "--wall-cells", str(args.wall_cells)] if args.wall_weight else []
-    common += ["--distance"] if args.distance else []
+    common += ["--distance", args.distance] if args.distance else []
     common += ["--airfoil-dirs"] + args.airfoil_dirs if args.airfoil_dirs else []
     todo = [("zero_shot", common + ["--pretrained", args.pretrained, "--iterations", "0"])] if args.pretrained else []
     for seed in args.seeds:

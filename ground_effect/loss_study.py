@@ -35,6 +35,7 @@ RUN = "f1_{}_s{}"  # the run with all the samples, from a start (pretrained or s
 COLOR, INK, GRID = "#eb6834", "#333333", "#d9d9d9"  # the colour of 'from the free-air model' in learning_curve.py
 PANELS = (("cl", "downforce (Cl) error"), ("p_near_wing", "pressure error next to the wing"),
           ("all_zeroed", "field error, output 0 in the solid"))
+DISTANCE_LABELS = {None: "", "mask": " + distance from the mask", "outline": " + exact distance"}  # in this order
 
 
 def parse(argv=None):
@@ -65,14 +66,15 @@ def label(settings, start="pretrained"):
         cells = settings["wall_cells"]
         parts.append(f"wall x{1 + settings['wall_weight']:g}, {cells} cell{'s' if cells != 1 else ''}")
     name = " + ".join(parts) or "plain L1"
-    name += " + distance input" if settings.get("distance") else ""
+    name += DISTANCE_LABELS[unet_data.distance_kind(settings.get("distance"))]
     return name + (", from random weights" if start == "scratch" else "")
 
 
 def losses(args):
     """(name, folder, start, settings) of the plain loss and of each run in --loss: the plain loss
-    first, then the Cl terms by weight, then the wall weightings; within each, without the distance
-    input first, and from the free-air model before from random weights."""
+    first, then the Cl terms by weight, then the wall weightings; within each, without a distance
+    input first, then with the distance from the mask, then with the exact distance, and from the
+    free-air model before from random weights."""
     folders = [("plain", args.plain, ["pretrained"])]
     for path in args.loss:
         if any(os.path.exists(os.path.join(path, RUN.format(start, args.seeds[0]))) for start in args.starts):
@@ -86,15 +88,15 @@ def losses(args):
             if os.path.exists(path):
                 with open(path) as f:
                     found.append((name, folder, start, json.load(f)["settings"]))
+    distance = lambda settings: list(DISTANCE_LABELS).index(unet_data.distance_kind(settings.get("distance")))
     order = lambda x: (x[0] != "plain", bool(x[3].get("wall_weight")), x[3].get("cl_weight", 0),
-                       x[3].get("wall_weight", 0), x[3].get("wall_cells", 0), bool(x[3].get("distance")),
-                       x[2] == "scratch")
+                       x[3].get("wall_weight", 0), x[3].get("wall_cells", 0), distance(x[3]), x[2] == "scratch")
     return sorted(found, key=order)
 
 
-def samples(args, p_offset, distance=False):
+def samples(args, p_offset, distance=None):
     """The validation and test samples of the plain runs (their errors_<set>.csv), normalised;
-    with distance=True, input 1 is the signed distance (unet_data.load)."""
+    with distance ('outline' or 'mask'), input 1 is that signed distance (unet_data.load)."""
     sets = {}
     for name, folder in (("val", args.data), ("test", args.test)):
         with open(os.path.join(args.plain, RUN.format("pretrained", args.seeds[0]), f"errors_{name}.csv")) as f:
@@ -107,10 +109,10 @@ def test_all(args):
     """One row per loss, start, seed and sample set, with every measure."""
     found = losses(args)
     p_offset = found[0][3].get("p_offset", "fluid")
-    loaded = {}  # the samples, without and with the distance input, loaded when first needed
+    loaded = {}  # the samples, without and with each kind of distance input, loaded when first needed
     rows, plain_err = [], {}
     for name, folder, start, settings in found:
-        distance = bool(settings.get("distance"))
+        distance = unet_data.distance_kind(settings.get("distance"))
         if distance not in loaded:
             loaded[distance] = samples(args, p_offset, distance)
         sets = loaded[distance]
@@ -127,8 +129,8 @@ def test_all(args):
                 s, _, cl_pred, cl_cfd = evaluate(predict(net, torch.from_numpy(d["inputs"])), d)
                 err = np.abs(cl_pred - cl_cfd)
                 plain = plain_err.setdefault((set_name, seed), err)  # the plain loss comes first
-                rows.append({"loss": name, "start": start, "label": label(settings, start), "seed": seed,
-                             "set": set_name, "n": s["n"],
+                rows.append({"loss": name, "start": start, "label": label(settings, start),
+                             "distance": distance or "", "seed": seed, "set": set_name, "n": s["n"],
                              "n_train": n_train, "p": s["p"], "v": s["v"], "all": s["all"],
                              "p_zeroed": s["zeroed"]["p"], "v_zeroed": s["zeroed"]["v"],
                              "all_zeroed": s["zeroed"]["all"], "p_near_wing": s["p_near_wing"],
@@ -149,13 +151,14 @@ def write_csv(rows, path):
 
 
 def by_loss(rows):
-    """{(loss, start): {'label': ..., 'val': {measure: [values of the seeds]}, 'test': {...}}}, in the
-    order of rows."""
+    """{(loss, start): {'label': ..., 'distance': ..., 'val': {measure: [values of the seeds]},
+    'test': {...}}}, in the order of rows."""
     out = {}
     for r in rows:
-        m = out.setdefault((r["loss"], r["start"]), {"label": r["label"]}).setdefault(r["set"], {})
+        m = out.setdefault((r["loss"], r["start"]), {"label": r["label"], "distance": r["distance"]})
+        m = m.setdefault(r["set"], {})
         for k, v in r.items():
-            if k not in ("loss", "start", "label", "set", "seed"):
+            if k not in ("loss", "start", "label", "distance", "set", "seed"):
                 m.setdefault(k, []).append(v)
     return out
 
@@ -197,7 +200,7 @@ def plot(rows, path, heading="Losses for the downforce"):
     m = by_loss(rows)
     names = list(m)
     best = min(names, key=lambda n: np.mean(m[n]["val"]["cl"]))  # the choice, on the validation samples
-    group = lambda n: (m[n]["label"].split()[0], "distance input" in m[n]["label"])
+    group = lambda n: (m[n]["label"].split()[0], m[n]["distance"])
     labels = [wrap(m[n]["label"].replace(" x", " ×")) for n in names]
     row = 0.36 + 0.12 * (max(t.count("\n") for t in labels))  # inches per row: more for labels on several lines
     plt.rcParams.update({"axes.edgecolor": INK, "axes.labelcolor": INK, "xtick.color": INK,

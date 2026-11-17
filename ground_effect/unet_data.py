@@ -20,10 +20,13 @@ mean over the air, but the ground masks 16-47% of the points, so the original me
 each pressure field by an amount set by the size of the masked area. Here the mean is taken over
 the air only (p_offset="fluid"); p_offset="grid" gives the original.
 
-Optionally (load(distance=True)), input 1, the freestream y velocity, which is always 0 in these
-samples, holds instead the signed distance to the wing and the ground (distance_field): the mask
-shows the shape only to the nearest grid point (1/64 chord), the distance down to the exact
-outline, which is rebuilt from the airfoil file as groundGen.py meshed it (wing_outline).
+Optionally (load(distance="outline"), or True), input 1, the freestream y velocity, which is always
+0 in these samples, holds instead the signed distance to the wing and the ground (distance_field):
+the mask shows the shape only to the nearest grid point (1/64 chord), the distance down to the
+exact outline, which is rebuilt from the airfoil file as groundGen.py meshed it (wing_outline).
+load(distance="mask") computes the distance from the mask instead (mask_distance): the same kind of
+input, but with nothing in it that the mask does not show. Comparing the two tells whether the
+distance helps because it has the exact shape or because of the way it describes the shape.
 """
 import glob
 import os
@@ -136,15 +139,43 @@ def distance_field(outline, ground_y, res=RES):
     return np.where(solid, -dist, dist).reshape(res, res)
 
 
+def mask_distance(mask):
+    """Signed distance (in chords) to the solid as the mask shows it, for one mask (res x res, x
+    index first): the surface is taken halfway between each solid grid point and the air points
+    next to it, so the distance is that to the nearest solid point (from the air) or the nearest
+    air point (from inside), less half a grid cell. Positive in the air, negative inside the wing
+    and below the ground, like distance_field, but with nothing in it that the mask does not show."""
+    from scipy.ndimage import distance_transform_edt
+    solid = np.asarray(mask) > 0.5
+    cells = np.where(solid, 0.5 - distance_transform_edt(solid), distance_transform_edt(~solid) - 0.5)
+    return 2.0 / solid.shape[-1] * cells  # the grid spans 2 chords
+
+
+DISTANCES = ("outline", "mask")  # the kinds of distance input: distance_field, mask_distance
+
+
+def distance_kind(value):
+    """The kind of distance input of a run (its setting 'distance'): None (no distance), 'outline'
+    or 'mask'. Runs from before 'mask' existed have true or false."""
+    if not value:
+        return None
+    kind = "outline" if value is True else value
+    if kind not in DISTANCES:
+        raise ValueError(f"distance must be one of {DISTANCES}, not {value!r}")
+    return kind
+
+
 def load(folder, p_offset="fluid", exclude_clipped=False, files=None, distance=False, airfoil_dirs=AIRFOIL_DIRS):
     """All samples in folder (see sample_files), or only files (paths in folder, as in 'file'), in
     that order; normalised. Returns a dict with 'inputs' and 'targets' (N x 3 x 128 x 128,
     float32), 'file' (path in folder), 'airfoil', 'h' (h/c), 'alpha' (deg), 'U' (m/s) and
     'clipped' (nuTilda still clipped at the end of the run). The original free-air files have
     only the array: there h and alpha are NaN, clipped is False and the airfoil name comes from
-    the file name. With distance=True, input 1 is the signed distance of distance_field (in
-    chords) instead of the freestream y velocity (always 0 here); the airfoil files are looked
-    for in airfoil_dirs (see wing_outline)."""
+    the file name. With distance="outline" (or True), input 1 is the signed distance of
+    distance_field (in chords) instead of the freestream y velocity (always 0 here), and the
+    airfoil files are looked for in airfoil_dirs (see wing_outline); with distance="mask", it is
+    that of mask_distance."""
+    kind = distance_kind(distance)
     files = sample_files(folder) if files is None else [os.path.join(folder, *f.split("/")) for f in files]
     if not files:
         raise SystemExit(f"no samples (.npz files) in {folder}")
@@ -155,10 +186,11 @@ def load(folder, p_offset="fluid", exclude_clipped=False, files=None, distance=F
     for i, f in enumerate(files):
         with np.load(f) as d:
             data["inputs"][i], data["targets"][i], data["U"][i] = normalise(d["a"], p_offset)
-            if distance:
+            if kind:
                 if np.any(data["inputs"][i][1]):
                     raise SystemExit(f"{f}: input 1 (freestream y velocity) is not 0, so it cannot hold the distance")
-                data["inputs"][i][1] = distance_field(*wing_outline(d, airfoil_dirs))
+                data["inputs"][i][1] = (distance_field(*wing_outline(d, airfoil_dirs)) if kind == "outline"
+                                        else mask_distance(data["inputs"][i][2]))
             data["file"].append(os.path.relpath(f, folder).replace(os.sep, "/"))
             data["airfoil"].append(str(d["airfoil"]) if "airfoil" in d.files else os.path.basename(f).split("_")[0])
             for key in ("h", "alpha"):
