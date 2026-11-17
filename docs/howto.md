@@ -203,12 +203,17 @@ smooth = glob.glob("/kaggle/input/**/airfoil_database_smooth", recursive=True)[0
 test_smooth = glob.glob("/kaggle/input/**/airfoil_database_test_smooth", recursive=True)[0]
 !python learning_curve.py --data {data}/train --test {data}/test --pretrained {model} --gpus 2 --fractions 1 --wall-weight 10 --distance --airfoil-dirs {smooth} {test_smooth} --out /kaggle/working/distance
 ```
-Put the folder `distance` from its output into `ground_effect/data/unet/`.
-Then the table and the figure, which compare its runs with those of
-`learning_curve_wall` (both starts):
+The same with the distance computed from the mask instead (the 2 runs from
+random weights, about 25 minutes; no airfoil files needed):
+```python
+!python learning_curve.py --data {data}/train --test {data}/test --gpus 2 --fractions 1 --starts scratch --wall-weight 10 --distance mask --out /kaggle/working/distance_mask
+```
+Put the folders `distance` and `distance_mask` from the outputs into
+`ground_effect/data/unet/`. Then the table and the figure, which compare
+their runs with those of `learning_curve_wall` (both starts):
 ```powershell
 cd ground_effect
-..\.venv\Scripts\python.exe loss_study.py --data data\dataset\train --test data\dataset\test --plain data\unet\plain_all --loss data\unet\learning_curve_wall data\unet\distance --starts pretrained scratch --csv data\unet\distance\loss_study.csv --title "The distance input" --plot ..\results\ground_distance_input.png
+..\.venv\Scripts\python.exe loss_study.py --data data\dataset\train --test data\dataset\test --plain data\unet\plain_all --loss data\unet\learning_curve_wall data\unet\distance data\unet\distance_mask --starts pretrained scratch --csv data\unet\distance\loss_study.csv --title "The distance input" --plot ..\results\ground_distance_input.png
 ```
 
 ## Ride-height sweeps of new wings
@@ -241,6 +246,12 @@ Tyrrell 026, the distance is built from the same wing file:
 ```powershell
 ..\.venv\Scripts\python.exe sweep_report.py --model data\unet\distance\f1_scratch_s0\model.pt data\unet\distance\f1_scratch_s1\model.pt --label "U-Net with the distance input, from random weights" --plot ..\results\sweep_naca4412_distance.png --csv ..\results\sweep_naca4412_distance.csv
 ..\.venv\Scripts\python.exe sweep_report.py --sweep data\sweep_tyrrell026 --model data\unet\distance\f1_scratch_s0\model.pt data\unet\distance\f1_scratch_s1\model.pt --label "U-Net with the distance input, from random weights" --plot ..\results\sweep_tyrrell026_distance.png --csv ..\results\sweep_tyrrell026_distance.csv
+```
+And the tables only, with the two models trained with the distance from the
+mask:
+```powershell
+..\.venv\Scripts\python.exe sweep_report.py --model data\unet\distance_mask\f1_scratch_s0\model.pt data\unet\distance_mask\f1_scratch_s1\model.pt --csv ..\results\sweep_naca4412_distance_mask.csv
+..\.venv\Scripts\python.exe sweep_report.py --sweep data\sweep_tyrrell026 --model data\unet\distance_mask\f1_scratch_s0\model.pt data\unet\distance_mask\f1_scratch_s1\model.pt --csv ..\results\sweep_tyrrell026_distance_mask.csv
 ```
 
 ## Notes

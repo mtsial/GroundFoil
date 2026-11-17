@@ -9,8 +9,11 @@ nearest surface. Trained from random weights on the same 3,096 samples, its
 downforce error on the 30 test airfoils falls from 6.8% to 3.9%, and its
 field error from 1.41% to 0.87%. On the Tyrrell 026, the downforce is now
 within 1.1% of the CFD at every ride height (step 12: 10–19% too low), but
-the suction peak is still too weak. Starting from the free-air model gains
-less (6.2% → 5.2%), so the final model will start from random weights.
+the suction peak is still too weak. The same kind of distance computed from
+the mask does not help (6.6%), so the gain comes from the shape finer than
+the grid, and it shows in the whole flow, not only next to the wing.
+Starting from the free-air model gains less (6.2% → 5.2%), so the final
+model will start from random weights.
 
 *Words used here: [glossary](glossary.md). References: [list](references.md).*
 
@@ -55,7 +58,7 @@ GPUs (see [How to run it](howto.md)).
 
 ## Test samples
 
-![Downforce error, pressure error next to the wing and field error, with and without the distance input](../results/ground_distance_input.png)
+![Downforce error, pressure error next to the wing and field error: the mask alone, with the distance computed from the mask, and with the exact distance](../results/ground_distance_input.png)
 
 Test samples, mean of the 2 seeds, all with the wall weighting
 (`loss_study.py`):
@@ -64,10 +67,13 @@ Test samples, mean of the 2 seeds, all with the wall weighting
 |---|---|---|---|---|---|
 | mask (step 10) | free-air model | 1.38% | 9.5% | 6.2% | 0.94 |
 | mask (step 10) | random weights | 1.41% | 9.6% | 6.8% | 0.90 |
-| mask + distance | free-air model | 1.12% | 8.6% | 5.2% | 0.95 |
-| mask + distance | random weights | 0.87% | 7.3% | 3.9% | 0.95 |
+| mask + distance from the mask | random weights | 1.42% | 9.7% | 6.6% | 0.90 |
+| mask + exact distance | free-air model | 1.12% | 8.6% | 5.2% | 0.95 |
+| mask + exact distance | random weights | 0.87% | 7.3% | 3.9% | 0.95 |
 
-With the plain loss (step 10): 1.54%, 16.6%, 9.9% and 0.84.
+With the plain loss (step 10): 1.54%, 16.6%, 9.9% and 0.84. The distance
+from the mask is explained [below](#shape-or-form); elsewhere on this page,
+"the distance" is the exact one.
 
 - **From random weights, the errors fall by a quarter to a half.** The
   downforce error drops from 6.8% to 3.9% (for the median sample, from 4.6%
@@ -89,6 +95,64 @@ With the plain loss (step 10): 1.54%, 16.6%, 9.9% and 0.84.
 - **Still the hardest samples.** The largest errors are still on the strut
   e864, whose Cl is close to 0, and on bw3 at h/c 0.073, which got worse
   (Cl off by 0.48, against 0.26).
+
+## Shape or form?
+
+The exact distance differs from the mask in two ways. It is another kind of
+picture: smooth, where the mask is only 0 or 1. And it holds the shape
+between the grid points, which the mask cannot show. To tell the two apart,
+we trained the U-Net once more with a distance computed from the mask itself
+(`train_unet.py --distance mask`): the same kind of picture, but with no more
+of the shape than the mask shows. It puts the surface halfway between each
+solid point and the air points next to it. On the test samples it differs
+from the exact distance by 0.36 cells on average, and its sign agrees with
+the mask everywhere. Same samples, settings and seeds, from random weights;
+the 2 runs took 22 minutes on Kaggle. All the comparisons below are between
+models trained from random weights.
+
+- **The shape, not the form.** With the distance from the mask, the
+  downforce error is 6.6% (seeds: 6.66% and 6.51%), against 6.8% with the
+  mask alone, and the field error is the same (1.42% and 1.41%). Cl comes
+  closer to the simulation on 52 of the 102 test samples (p = 0.69) and on
+  177 of the 340 validation samples (p = 0.22): no difference we can
+  measure. The exact distance is closer than the distance from the mask on
+  80 of the 102 test samples (p = 5.4 × 10⁻⁹) and on 249 of the 340
+  validation samples (p = 8.9 × 10⁻²⁴). So what helps is the shape finer
+  than the grid.
+- **Except very close to the ground.** Below h/c 0.08 (79 test and
+  validation samples), the distance from the mask does help: the downforce
+  error falls from 6.6% to 5.7% (closer on 50 of the 79, p = 0.003), and
+  the exact distance adds less there (4.8%) than at any other ride height.
+  The gap under the wing is only 3–5 cells high there. Perhaps the distance
+  helps because it gives the height of the gap in every cell of it, while
+  from the mask the U-Net has to find it from the solid cells above and
+  below.
+- **Not mainly the trailing edge.** The grid points rarely fall inside the
+  thin trailing edge, so in the mask the wing ends early: 2 cells (0.03
+  chords) before its true end on average, and up to 11 cells (0.17 chords)
+  for the thin mh49. For the mh49, only the exact distance helps: on its 6
+  test samples, Cl is off by 0.17 on average with the distance from the
+  mask (0.15 with the mask alone), and by 0.03 with the exact one. But over
+  all 442 test and validation samples, the gain from the exact distance
+  does not grow with how much of the trailing edge the mask misses
+  (Spearman ρ = 0.04), nor with how much the grid rounds the ride height
+  (ρ = 0.01).
+- **Better in the whole flow.** Of the drop in the pressure error from the
+  distance from the mask to the exact distance (test samples, cells in the
+  air), 80% lies more than 0.1 chords from the wing (92% of the cells),
+  where the error falls by 44–47%, against 28–35% closer to the wing. The
+  cells within 0.1 chords of the leading and the trailing edge give 2% and
+  1% of it. A lifting wing sets the pressure far around it through its
+  circulation, so this suggests that the exact shape mainly helps the U-Net
+  to get the circulation right: perhaps through the camber and the angle of
+  the surface, which the mask shows only to the nearest cell.
+- **The two wings agree.** In the sweeps of steps 11 and 12, the models
+  with the distance from the mask are about as far off as those with the
+  mask alone. On the Tyrrell 026 they give 8.5% too little downforce on
+  average (mask alone: 6.3%, exact distance: 0.5% off). On the NACA 4412
+  they are 1.2% off on average (mask alone: 1.3%, exact distance: 2.8%).
+  Tables: [Tyrrell 026](../results/sweep_tyrrell026_distance_mask.csv),
+  [NACA 4412](../results/sweep_naca4412_distance_mask.csv).
 
 ## The two wings again
 

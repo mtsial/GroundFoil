@@ -67,7 +67,9 @@ The study in thirteen steps, each with its own page:
 13. **[The exact wing shape](docs/13-distance-input.md):** the distance to
     the wing's surface as an extra input. Trained from random weights, the
     downforce error falls to 3.9% and the field error to 0.9%. On the
-    Tyrrell 026 the downforce is within 1.1% at every ride height.
+    Tyrrell 026 the downforce is within 1.1% at every ride height. A
+    distance computed from the mask does not help: the gain comes from the
+    shape finer than the grid.
 
 **Next:** four more batches of 1000 runs (about 6,200 training samples),
 then the final U-Net with the distance input, the learning curve and both
