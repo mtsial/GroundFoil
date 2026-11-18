@@ -23,6 +23,10 @@ Words used on these pages.
 | Ride height (h/c) | The gap between the wing's lowest point and the ground, divided by the chord |
 | Angle of attack (α) | How far the wing is tilted against the oncoming air |
 | Cl, Cd | Downforce (lift) and drag, divided by ½ × air density × speed² × chord, so that cases can be compared. Negative Cl means downforce |
+| Cp | The pressure at a point of the surface, minus that of the oncoming air, divided by ½ × air density × speed². Below 0 means suction; plots show −Cp, suction up |
+| Cf | The friction of the air on the surface, divided by the same. Negative where the air next to the wall runs back, towards the leading edge: separated flow |
+| Cm | The turning effect of the forces about the quarter chord: it says where on the wing the force acts |
+| Pressure distribution | Cp along the wing's surface, from the leading to the trailing edge: what wind tunnels measure with small pressure holes in the model |
 | Reynolds number (Re) | Speed × chord ÷ the air's viscosity; here 1–5 million |
 | Ground effect | The extra downforce a wing makes close to the ground |
 | Moving ground | The ground moves at the air's speed, as the road does under a car |

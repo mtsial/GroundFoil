@@ -285,6 +285,48 @@ foreach ($d in "baseline_cl", "baseline_cl_openfoam") { ..\.venv\Scripts\python.
 ..\.venv\Scripts\python.exe -c "import zipfile; z = zipfile.ZipFile('../data/kaggle/ground_effect_4000runs.zip'); n = sorted(x[6:] for x in z.namelist() if x.startswith('train/') and x.endswith('.npz') and 'not_converged' not in x); open('data/unet/baseline_cl/train_files.txt', 'w').write(chr(10).join(n) + chr(10))"
 ```
 
+### Learning curves for the downforce
+
+`cl_learning_curve.py` trains the small network and a Gaussian process on
+97 to 3,096 samples (the same samples as the U-Net runs of
+`learning_curve.py` at each size) and adds the U-Net's rows. The Gaussian
+process's memory and time grow with the cube of the number of samples, so it
+runs on Kaggle's GPU (both datasets, "GPU T4 x2"), with `data`, `smooth` and
+`test_smooth` found as above:
+```python
+!python cl_learning_curve.py --data {data}/train --test {data}/test --airfoil-dirs {smooth} {test_smooth} --csv /kaggle/working/cl_learning_curve.csv
+!python cl_learning_curve.py --data {data}/train --test {data}/test --airfoil-dirs {smooth} {test_smooth} --models gp --gp-components 8 --csv /kaggle/working/cl_learning_curve.csv
+```
+Each row of the table is written as soon as it is done, and a run started
+again skips the rows already there. Then, on Windows, with the table from
+the output, the U-Net's rows and the figure:
+```powershell
+cd ground_effect
+..\.venv\Scripts\python.exe cl_learning_curve.py --data data\dataset\train --files data\unet\baseline_cl\train_files.txt --test data\dataset\test --models --unet data\unet\learning_curve_wall --unet-extra data\unet\distance\f1_scratch_s0 data\unet\distance\f1_scratch_s1 --csv ..\results\downforce_learning_curve.csv --plot ..\results\downforce_learning_curve.png
+```
+
+## The pressure along the wing
+
+The surface model of [The pressure along the wing](15-surface-model.md). First
+the check that the surface data, put on the mesh's own faces, give OpenFOAM's
+forces, and how much is lost with 64, 128 and 200 points per side (a few
+seconds):
+```powershell
+cd ground_effect
+..\.venv\Scripts\python.exe surface_data.py --folder data\dataset\test --stations 64 128 200
+```
+Then the two models (about 6 minutes each on the CPU, plus 2 minutes to read
+the samples), with both sweeps and the other two models' downforce, and the
+figure of the pressure curves:
+```powershell
+..\.venv\Scripts\python.exe surface_model.py --data data\dataset\train --files data\unet\baseline_cl\train_files.txt --test data\dataset\test --out data\unet\surface_model --sweep data\sweep_naca4412 data\sweep_tyrrell026 --compare-net data\unet\baseline_cl_openfoam --compare-unet data\unet\distance\f1_scratch_s0 data\unet\distance\f1_scratch_s1
+..\.venv\Scripts\python.exe surface_report.py --model data\unet\surface_model\s0 --test data\dataset\test --pick 50 90 --samples data\sweep_tyrrell026\h0134\tyrrell026_h0134_a+0345_U0100.npz data\sweep_tyrrell026\h0067\tyrrell026_h0067_a+0345_U0100.npz --plot ..\results\surface_model_cp.png
+copy data\unet\surface_model\sweep_naca4412.csv ..\results\sweep_naca4412_surface_model.csv
+copy data\unet\surface_model\sweep_tyrrell026.csv ..\results\sweep_tyrrell026_surface_model.csv
+```
+`--search` chooses the width, the depth and the weight decay on the validation
+samples (8 combinations, 2 seeds each; better on a GPU).
+
 ## Predictions for any wing, and pictures of the flow
 
 `predict.py` runs the U-Net for an airfoil file (or `nacaXXXX`, or an airfoil

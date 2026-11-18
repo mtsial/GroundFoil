@@ -179,12 +179,12 @@ def scale(sets, target):
 
 # ---------------------------------------------------------------- the network
 
-def make_net(n_in, width, depth):
+def make_net(n_in, width, depth, n_out=1):
     layers, k = [], n_in
     for _ in range(depth):
         layers += [torch.nn.Linear(k, width), torch.nn.SiLU()]
         k = width
-    return torch.nn.Sequential(*layers, torch.nn.Linear(k, 1))
+    return torch.nn.Sequential(*layers, torch.nn.Linear(k, n_out))
 
 
 def predict(net, x, s):
