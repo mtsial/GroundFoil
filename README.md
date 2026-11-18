@@ -8,7 +8,7 @@
 Simulations of Airfoil Flows"** (*AIAA Journal*, 2020), which we first
 reproduced on current software: OpenFOAM v2606, gmsh 4 and Docker on Windows
 (about 3% test error, as in the paper). The ground-effect simulations are
-checked against high-resolution LES (skin friction within 6–7%), wind-tunnel
+checked against high-resolution LES (skin friction within 7–8%), wind-tunnel
 tests of an F1 wing (downforce gain near the ground within 4%) and finer meshes
 (0.04–3%).
 Trained on 3,096 of these simulations, the U-Net predicts the flow around 30
@@ -41,7 +41,7 @@ The study in fifteen steps, each with its own page:
    high-resolution LES) and a faster solver setting.
 3. **[Mesh study](docs/03-mesh-study.md):** three rounds, ending with a mesh on
    which the downforce is converged (GCI 0.04%) and skin friction matches the
-   LES within 6–7%, and with a convergence test that every run must pass.
+   LES within 7–8%, and with a convergence test that every run must pass.
 4. **[Wind-tunnel validation](docs/04-wind-tunnel.md):** the Tyrrell 026 F1
    front wing at nine ride heights. The downforce it gains near the ground
    matches the tunnel within 4%.
@@ -104,7 +104,7 @@ the simulated pressure and velocity.*
 | | Result | Details |
 |---|---|---|
 | Reproduction, free air | 2.96% test error with the paper's training length (paper: 2.6%); pressure and velocity errors as in the paper's best model | [Step 1](docs/01-reproduction.md) |
-| CFD against high-resolution LES | NACA 4412 in free air: skin friction within 6–7% on average; surface pressure also close (mean \|ΔCp\| 0.009–0.014) | [Step 3](docs/03-mesh-study.md) |
+| CFD against high-resolution LES | NACA 4412 in free air, with the settings of the dataset: skin friction within 7.6% (suction side) and 7.3% (pressure side) on average; surface pressure also close (mean \|ΔCp\| 0.009–0.014) | [Step 3](docs/03-mesh-study.md) |
 | CFD against the wind tunnel | Tyrrell 026 F1 wing: the downforce gained near the ground within 4% | [Step 4](docs/04-wind-tunnel.md) |
 | Mesh study | numerical uncertainty of the downforce 0.04–3%, largest closest to the ground | [Steps 3 and 4](docs/03-mesh-study.md) |
 | Airfoil shapes | 1,462 of the 1,497 UIUC files smoothed: pressure wiggles above 0.1 in 453 files before, in none after | [Step 5](docs/05-airfoil-shapes.md) |

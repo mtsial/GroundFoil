@@ -7,7 +7,9 @@ boundary-layer mesh, in a small and a large domain. Round 2 set the first cell
 to y+ ≈ 1 and fixed the cell sizes; skin friction then matches the LES within
 6–7%. Round 3 made the turbulence equation converge cleanly, measured the grid
 convergence (GCI 0.04% for the downforce on the default mesh) and brought in the
-convergence test that every run must pass.
+convergence test that every run must pass. With the final settings of round 3,
+which made all the data, the skin friction is within 7.6% (suction side) and
+7.3% (pressure side) of the LES on average.
 
 *Words used here: [glossary](glossary.md). References: [list](references.md).*
 
