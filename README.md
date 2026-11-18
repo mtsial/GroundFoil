@@ -173,6 +173,7 @@ ground_effect/clip_test.sh        what the nuTilda clipping changes, and whether
 ground_effect/clip_test_report.py tables and figure of that test
 ground_effect/clip_cells.py       finds the cells where OpenFOAM clipped nuTilda in a finished run
 ground_effect/dataset.sh          makes the dataset with several runs at a time (inside the container)
+ground_effect/make_dataset_zip.py zips the samples for a Kaggle dataset, after checking them against the lists of runs
 ground_effect/unet.py             the U-Net of the original code (copied from DfpNet.py, unchanged)
 ground_effect/unet_data.py        loads and normalises the ground-effect samples (optionally with the signed distance); the original error measure and the downforce from the pressure
 ground_effect/train_unet.py       trains one U-Net (from random weights or from the free-air model) and tests it
@@ -182,7 +183,7 @@ ground_effect/sweep_naca4412.sh   ride-height sweep of the NACA 4412: 12 heights
 ground_effect/sweep_tyrrell026.sh ride-height sweep of the Tyrrell 026 at the tunnel's heights and 10 m/s (inside the container)
 ground_effect/sweep_report.py     table and figure of a sweep, with the U-Net's predictions
 ground_effect/baseline_cl.py      comparison model: a small network that predicts only the downforce, from the shape, ride height, angle and speed
-ground_effect/predict.py          the U-Net for any airfoil, ride height, angle and speed, without a simulation: downforce and a picture of the flow
+ground_effect/predict.py          the trained models for any airfoil, ride height, angle and speed, without a simulation: the U-Net's flow, the downforce network's Cl, the surface model's pressure, friction and forces
 ground_effect/field_figure.py     simulated and predicted flow fields side by side, with their difference
 ground_effect/downforce_report.py figure and table of the U-Net against the comparison model (step 14)
 ground_effect/cl_learning_curve.py  downforce error against the amount of data: small network, Gaussian process and U-Net

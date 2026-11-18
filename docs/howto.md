@@ -327,6 +327,67 @@ copy data\unet\surface_model\sweep_tyrrell026.csv ..\results\sweep_tyrrell026_su
 `--search` chooses the width, the depth and the weight decay on the validation
 samples (8 combinations, 2 seeds each; better on a GPU).
 
+## The final runs, on all the data
+
+When every batch has finished, all the models are trained again on all the
+samples, in one Kaggle notebook. First the zip for the Kaggle dataset, in the
+project folder. It checks that every sample is in its folder's
+`samples.csv` and every line there has its sample, so it refuses to zip while
+a batch is still running (`--check` does only the check):
+```powershell
+.venv\Scripts\python.exe ground_effect\make_dataset_zip.py data\kaggle\ground_effect_final.zip
+```
+Upload the zip as a new version of the Kaggle dataset of samples, with the
+old file removed from that version (the cell below stops if it finds two
+datasets of samples). Then a notebook with both datasets (the samples and the
+airfoil files), "GPU T4 x2" and internet on, and this cell. It takes about
+6–7 hours, so start it with "Save & Run All (Commit)":
+```python
+!git clone https://github.com/taimooraslam22g/GroundFoil.git
+%cd GroundFoil/ground_effect
+!git log -1 --format="code version %h: %s"
+import glob, os, subprocess
+w0 = glob.glob("/kaggle/input/**/train/w0", recursive=True)
+assert len(w0) == 1, w0  # exactly one dataset of samples
+data = os.path.dirname(os.path.dirname(w0[0]))
+smooth = glob.glob("/kaggle/input/**/airfoil_database_smooth", recursive=True)[0]
+test_smooth = glob.glob("/kaggle/input/**/airfoil_database_test_smooth", recursive=True)[0]
+n = len([f for f in glob.glob(f"{data}/train/**/*.npz", recursive=True) if "not_converged" not in f])
+print(f"{n} training samples (the validation samples among them)")
+assert n > 5000, "an older version of the dataset?"
+out = "/kaggle/working"
+common = f"--data {data}/train --test {data}/test --airfoil-dirs {smooth} {test_smooth}"
+
+# 1. The U-Net (distance input, random start, loss weighted next to the wing): the two
+#    models with all the samples first, then the learning curve down to 1/64 (about 2.5 h)
+unet = f"{common} --gpus 2 --starts scratch --wall-weight 10 --distance"
+!python learning_curve.py {unet} --fractions 1 --out {out}/final_unet
+!python learning_curve.py {unet} --fractions 0.5 0.25 0.125 0.0625 0.03125 0.015625 --out {out}/final_unet --plot {out}/final_unet.png
+
+# 2. The network for the downforce alone, its settings chosen on the validation samples
+#    as in the first search, for the grid's Cl and for OpenFOAM's (about 2 h)
+grid = "--widths 128 256 512 --depths 2 3 4 --weight-decays 1e-5 1e-4 1e-3 --lrs 1e-3 3e-3"
+for target, name in [("grid", "baseline_cl"), ("openfoam", "baseline_cl_openfoam")]:
+    !python baseline_cl.py {common} --search {grid} --jobs 4 --target {target} --out {out}/{name}
+
+# 3. One GPU each, side by side: the surface model with its search, and the learning
+#    curves of the downforce with the Gaussian process (about 1 h)
+fractions = "1 0.5 0.25 0.125 0.0625 0.03125 0.015625"
+jobs = [f"python surface_model.py {common} --search --out {out}/surface_model",
+        f"python cl_learning_curve.py {common} --fractions {fractions} --csv {out}/cl_learning_curve.csv && "
+        f"python cl_learning_curve.py {common} --fractions {fractions} --models gp --gp-components 8 --csv {out}/cl_learning_curve.csv"]
+procs = [subprocess.Popen(cmd, shell=True, stdout=open(f"{out}/side_by_side_gpu{i}.log", "w"),
+                          stderr=subprocess.STDOUT, env=dict(os.environ, CUDA_VISIBLE_DEVICES=str(i)))
+         for i, cmd in enumerate(jobs)]
+print("exit codes:", [p.wait() for p in procs])
+!tail -n 4 {out}/side_by_side_gpu0.log {out}/side_by_side_gpu1.log
+
+# 4. A check: does the U-Net with all the samples gain from twice the training? (about 45 min)
+!python learning_curve.py {unet} --fractions 1 --iterations 160000 --out {out}/final_unet_160k
+```
+Each part writes its results as it goes and skips the finished ones when run
+again, so after an interruption the same cell goes on where it stopped.
+
 ## Predictions for any wing, and pictures of the flow
 
 `predict.py` runs the U-Net for an airfoil file (or `nacaXXXX`, or an airfoil
@@ -339,6 +400,17 @@ prediction takes about 46 ms on one CPU thread (a simulation: a median of
 ```powershell
 cd ground_effect
 ..\.venv\Scripts\python.exe predict.py --airfoil naca4412 --h 0.1 --alpha 4 --U 30 --model data\unet\distance\f1_scratch_s0\model.pt data\unet\distance\f1_scratch_s1\model.pt --plot flow.png
+```
+It also runs the two small networks, alone or with the U-Net: the network
+for the downforce alone ([step 14](14-downforce-model.md); `--force-model`,
+its model folders) and the surface model ([step 15](15-surface-model.md);
+`--surface-model`), which gives Cl, Cd and Cm and, with `--plot-surface`,
+draws its pressure and friction along the chord. From the geometry alone,
+both give the predictions they stored for the 102 test samples and the two
+sweeps within 5e-6 (the rounding of those tables). Each takes under a
+millisecond, and adding up the surface model's forces 2 ms:
+```powershell
+..\.venv\Scripts\python.exe predict.py --airfoil naca4412 --h 0.1 --alpha 4 --U 30 --force-model data\unet\baseline_cl_openfoam\s0 data\unet\baseline_cl_openfoam\s1 --surface-model data\unet\surface_model\s0 data\unet\surface_model\s1 --plot-surface surface.png
 ```
 `field_figure.py` shows simulated and predicted fields side by side, with their
 difference, for test samples chosen by their error (here at the 10th, 50th
