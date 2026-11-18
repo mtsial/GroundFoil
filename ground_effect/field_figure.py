@@ -105,8 +105,11 @@ def plot(args, rows):
                   ("U-Net", net_out, TwoSlopeNorm(middle, middle - lim, middle + lim), "neither"),
                   ("U-Net minus simulation (scale: 99.5% of the cells)", diff, TwoSlopeNorm(0.0, -dlim, dlim), "both"))
         for ax, (title, field, norm, extend) in zip(axes[r], panels):
+            # the values belong to the grid points x = -0.5 + 2i/128 (groundGen.grid_x): centre each
+            # pixel on its point, half a cell below and to the left of the window [-0.5, 1.5] x [-1, 1]
+            half = 1 / unet_data.RES
             im = ax.imshow(np.ma.masked_where(mask.T, field.T), origin="lower", cmap="RdBu_r", norm=norm,
-                           extent=[-0.5, 1.5, -1, 1])
+                           extent=[-0.5 - half, 1.5 - half, -1 - half, 1 - half])
             ax.add_patch(patches.Polygon(outline, closed=True, facecolor="#bbbbbb", edgecolor="#333333", lw=0.8))
             if np.isfinite(ground_y) and -1 < ground_y < 1:
                 ax.axhspan(-1, ground_y, color="#bbbbbb")
