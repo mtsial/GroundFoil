@@ -79,7 +79,11 @@ Against OpenFOAM's force, mean of the 2 seeds:
   and for the one at the 90th percentile, the predicted pressure and friction
   lie on the simulated ones, the separated flow at the trailing edge (the
   friction below 0) included.
-- **Drag is the hardest.** For the median test sample, the drag is 8.4% off.
+- **Drag is the hardest, also for the simulations.** On the dataset's mesh
+  the simulated drag itself carries about 10% numerical uncertainty, against
+  0.04% for the downforce ([step 3](03-mesh-study.md)), so the drag targets
+  are less certain than the downforce targets. For the median test sample,
+  the drag is 8.4% off.
   The error grows with the ride height, as the drag gets smaller: 3.7% below
   h/c 0.08, 17% above h/c 0.365. The largest errors are on the strut e864
   (Cl close to 0) and on bw3, which were also the U-Net's hardest samples.
