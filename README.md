@@ -165,6 +165,9 @@ ground_effect/loss_study.py       compares training losses and inputs for the do
 ground_effect/sweep_naca4412.sh   ride-height sweep of the NACA 4412: 12 heights and free air (inside the container)
 ground_effect/sweep_tyrrell026.sh ride-height sweep of the Tyrrell 026 at the tunnel's heights and 10 m/s (inside the container)
 ground_effect/sweep_report.py     table and figure of a sweep, with the U-Net's predictions
+ground_effect/baseline_cl.py      comparison model: a small network that predicts only the downforce, from the shape, ride height, angle and speed
+ground_effect/predict.py          the U-Net for any airfoil, ride height, angle and speed, without a simulation: downforce and a picture of the flow
+ground_effect/field_figure.py     simulated and predicted flow fields side by side, with their difference
 results/                    figures and reproduction results
 Deep-Flow-Prediction/       the original code, which you clone here (see Quick start); not part of this repo
 ```
