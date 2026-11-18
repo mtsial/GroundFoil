@@ -19,6 +19,8 @@ distance to the wing's surface as an extra input (9.9% with neither). On two
 wings it has never seen, it predicts the downforce at every ride height
 within 4% (the NACA 4412) and within 1.1% (the Tyrrell 026, the F1 wing of
 the wind-tunnel tests), and puts its peak at the same ride height as the CFD.
+For the downforce alone, a small network that skips the flow does better:
+1.6% on the same test airfoils.
 
 - Thuerey et al.'s paper: https://arxiv.org/abs/1810.08217
 - Their code: https://github.com/thunil/Deep-Flow-Prediction (Apache-2.0)
@@ -27,7 +29,7 @@ Words used here are explained in the [glossary](docs/glossary.md).
 
 ## Workflow
 
-The study in thirteen steps, each with its own page:
+The study in fourteen steps, each with its own page:
 
 1. **[Reproduction](docs/01-reproduction.md):** we first ran the original
    free-air study on current software, to start from a working pipeline and a
@@ -70,11 +72,16 @@ The study in thirteen steps, each with its own page:
     Tyrrell 026 the downforce is within 1.1% at every ride height. A
     distance computed from the mask does not help: the gain comes from the
     shape finer than the grid.
+14. **[The downforce alone](docs/14-downforce-model.md):** a small network
+    that predicts only the downforce, from the shape, the ride height, the
+    angle and the speed, does better than the U-Net: 1.6% against 3.9% on the
+    test airfoils (1.5% against 4.3% compared with OpenFOAM's force). On the
+    F1 wing the two tie (1.2%). The U-Net's strength is the flow itself.
 
 **Next:** four more batches of 1000 runs (about 6,200 training samples),
-then the final U-Net with the distance input, the learning curve and both
-sweeps again; figures of predicted and simulated flow fields. All commands
-are in [How to run it](docs/howto.md).
+then the final U-Net and the small downforce network with all the data, the
+learning curve and both sweeps again; figures of predicted and simulated flow
+fields. All commands are in [How to run it](docs/howto.md).
 
 ## What the network learns
 
@@ -97,6 +104,7 @@ the simulated pressure and velocity.*
 | Where steady RANS converges | Cl becomes steady in 86% of the dataset's runs; close to the ground the flow separates, and part of the range has no steady solution | [Step 6](docs/06-parameter-scan.md) |
 | U-Net in ground effect | 0.9% error on 30 unseen airfoils with 3,096 training samples and the distance input (1.4% without it; the free-air model as it is: 20%) | [Steps 8, 10 and 13](docs/13-distance-input.md) |
 | Downforce from the U-Net | 3.9% error with a loss weighted next to the wing and the distance input (6.2% with the weighting alone; plain loss: 9.9%) | [Steps 9, 10 and 13](docs/13-distance-input.md) |
+| Downforce from a model of its own | a small network on the shape, ride height, angle and speed: 1.6% error on the 30 test airfoils (1.5% against OpenFOAM's force, where the U-Net is 4.3%); 0.13 ms per prediction | [Step 14](docs/14-downforce-model.md) |
 | Unseen wing: NACA 4412 | at 11 ride heights: downforce within 5% (within 4% with the distance input), peak at the same height as the CFD | [Steps 11 and 13](docs/11-naca4412-sweep.md) |
 | Unseen wing: Tyrrell 026 (F1) | at the tunnel's 9 ride heights: downforce within 1.1% with the distance input (10–19% low without it); the suction peak still too weak | [Steps 12 and 13](docs/13-distance-input.md) |
 
@@ -126,7 +134,7 @@ checks, the dataset and the training) is in [How to run it](docs/howto.md).
 
 ```
 README.md                   this page: summary, the steps, results, quick start
-docs/                       one page per step (01-reproduction.md to 13-distance-input.md), howto.md, glossary.md, references.md
+docs/                       one page per step (01-reproduction.md to 14-downforce-model.md), howto.md, glossary.md, references.md
 Dockerfile                  OpenFOAM v2606 + gmsh + Python environment
 patches/openfoam-v2606.patch  fixes to the original code for OpenFOAM v2606
 scripts/view_sample.py      plots all six channels of a training sample
@@ -168,6 +176,7 @@ ground_effect/sweep_report.py     table and figure of a sweep, with the U-Net's 
 ground_effect/baseline_cl.py      comparison model: a small network that predicts only the downforce, from the shape, ride height, angle and speed
 ground_effect/predict.py          the U-Net for any airfoil, ride height, angle and speed, without a simulation: downforce and a picture of the flow
 ground_effect/field_figure.py     simulated and predicted flow fields side by side, with their difference
+ground_effect/downforce_report.py figure and table of the U-Net against the comparison model (step 14)
 results/                    figures and reproduction results
 Deep-Flow-Prediction/       the original code, which you clone here (see Quick start); not part of this repo
 ```

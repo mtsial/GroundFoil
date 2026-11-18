@@ -346,7 +346,8 @@ def sweep_table(name, recs, preds, target, out):
               f"({-p[:, i].max():.3f}-{-p[:, i].min():.3f}) {100 * (p[:, i].mean() / ref - 1):+7.1f}%")
     dev = [r[f"net_vs_{target}_pct"] for r in rows]
     print(f"  mean {np.mean(dev):+.1f}%, mean |.| {np.mean(np.abs(dev)):.1f}%")
-    with open(os.path.join(out, f"sweep_{os.path.basename(os.path.normpath(name))}.csv"), "w", newline="") as f:
+    base = os.path.basename(os.path.normpath(name))  # e.g. sweep_naca4412
+    with open(os.path.join(out, (base if base.startswith("sweep") else "sweep_" + base) + ".csv"), "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0]))
         w.writeheader()
         w.writerows(rows)

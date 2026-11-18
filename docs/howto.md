@@ -254,6 +254,57 @@ mask:
 ..\.venv\Scripts\python.exe sweep_report.py --sweep data\sweep_tyrrell026 --model data\unet\distance_mask\f1_scratch_s0\model.pt data\unet\distance_mask\f1_scratch_s1\model.pt --csv ..\results\sweep_tyrrell026_distance_mask.csv
 ```
 
+## A model for the downforce alone
+
+The comparison model of [The downforce alone](14-downforce-model.md) trains on
+Kaggle's GPUs (on one CPU thread a model takes 2–15 minutes; the two tunings
+are 216 models). Both Kaggle datasets are needed, the samples and the airfoil
+files, and "GPU T4 x2". With `data`, `smooth` and `test_smooth` found as in the
+cells above:
+```python
+grid = "--widths 128 256 512 --depths 2 3 4 --weight-decays 1e-5 1e-4 1e-3 --lrs 1e-3 3e-3"
+!python baseline_cl.py --data {data}/train --test {data}/test --airfoil-dirs {smooth} {test_smooth} --search {grid} --jobs 4 --out /kaggle/working/baseline_cl
+!python baseline_cl.py --data {data}/train --test {data}/test --airfoil-dirs {smooth} {test_smooth} --search {grid} --jobs 4 --target openfoam --out /kaggle/working/baseline_cl_openfoam
+```
+Each model's result is saved as soon as it is trained (`search_runs.csv`), and
+a run started again skips the models already there. Put the folders
+`baseline_cl` and `baseline_cl_openfoam` from the output into
+`ground_effect/data/unet/`. The comparison with the U-Net and the sweeps need
+files that stay on Windows (the Tyrrell 026's shape), so they run there, with
+the models from Kaggle (`--load`; it first checks that they give the same Cl
+here). The training samples must be those of the Kaggle dataset: since the
+local folder holds more by now, `train_files.txt` lists them (the training
+samples in `ground_effect_4000runs.zip`). Then the figure:
+```powershell
+cd ground_effect
+foreach ($d in "baseline_cl", "baseline_cl_openfoam") { ..\.venv\Scripts\python.exe baseline_cl.py --data data\dataset\train --files data\unet\baseline_cl\train_files.txt --test data\dataset\test --out data\unet\$d --load --sweep data\sweep_naca4412 data\sweep_tyrrell026 --compare data\unet\distance\f1_scratch_s0 data\unet\distance\f1_scratch_s1 }
+..\.venv\Scripts\python.exe downforce_report.py --baseline data\unet\baseline_cl_openfoam --unet-sweeps ..\results\sweep_tyrrell026_distance.csv ..\results\sweep_naca4412_distance.csv --plot ..\results\downforce_model.png --csv ..\results\downforce_model.csv
+```
+`train_files.txt` was written from the zip with:
+```powershell
+..\.venv\Scripts\python.exe -c "import zipfile; z = zipfile.ZipFile('../data/kaggle/ground_effect_4000runs.zip'); n = sorted(x[6:] for x in z.namelist() if x.startswith('train/') and x.endswith('.npz') and 'not_converged' not in x); open('data/unet/baseline_cl/train_files.txt', 'w').write(chr(10).join(n) + chr(10))"
+```
+
+## Predictions for any wing, and pictures of the flow
+
+`predict.py` runs the U-Net for an airfoil file (or `nacaXXXX`, or an airfoil
+of the dataset's folders), a ride height, an angle and a speed, without a
+simulation: it prints -Cl from each model and draws the flow. It builds the
+inputs as the dataset has them; on the 102 test samples, its downforce is
+within 0.13% on average of that from the simulation's own inputs. One
+prediction takes about 46 ms on one CPU thread (a simulation: a median of
+318 s on one core):
+```powershell
+cd ground_effect
+..\.venv\Scripts\python.exe predict.py --airfoil naca4412 --h 0.1 --alpha 4 --U 30 --model data\unet\distance\f1_scratch_s0\model.pt data\unet\distance\f1_scratch_s1\model.pt --plot flow.png
+```
+`field_figure.py` shows simulated and predicted fields side by side, with their
+difference, for test samples chosen by their error (here at the 10th, 50th
+and 90th percentile) and for any other sample:
+```powershell
+..\.venv\Scripts\python.exe field_figure.py --model data\unet\distance\f1_scratch_s0\model.pt --test data\dataset\test --pick 10 50 90 --samples data\sweep_tyrrell026\h0134\tyrrell026_h0134_a+0345_U0100.npz --quantity p --plot fields_p.png
+```
+
 ## Notes
 
 The Windows scripts (training, `make_tyrrell026.py` and the airfoil scripts)
