@@ -30,7 +30,7 @@ data.
 
 - **The same curve as at the tunnel's Reynolds number.** The downforce peaks
   at h/c 0.112–0.134 with 1.75, 2.03 times its free-air value, and falls by
-  7% down to h/c 0.067. In step 4, the CFD, the CFL3D simulations and the
+  7.5% down to h/c 0.067. In step 4, the CFD, the CFL3D simulations and the
   tunnel also peaked there.
 - **The higher speed gives more downforce.** Compared with the runs of step 4
   on the same mesh, there is 2% more in free air and 6–7% more around the

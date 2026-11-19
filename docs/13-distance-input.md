@@ -1,12 +1,12 @@
 # 13. The exact wing shape: the distance to the surface as an input
 
-[README](../README.md) · ← [12. The F1 wing](12-tyrrell026-sweep.md) · [Workflow](../README.md#workflow)
+[README](../README.md) · ← [12. The F1 wing](12-tyrrell026-sweep.md) · [14. The downforce alone](14-downforce-model.md) → · [Workflow](../README.md#workflow)
 
 Until now the U-Net saw the wing only as a mask: each cell of its 128 × 128
 grid is either wing or air, and a cell is 1/64 of the chord. We gave it the
 exact shape as well, as one more picture: the distance from each point to the
 nearest surface. Trained from random weights on the same 3,096 samples, its
-downforce error on the 30 test airfoils falls from 6.8% to 3.9%, and its
+downforce error on the 28 test airfoils falls from 6.8% to 3.9%, and its
 field error from 1.41% to 0.87%. On the Tyrrell 026, the downforce is now
 within 1.1% of the CFD at every ride height (step 12: 10–19% too low), but
 the suction peak is still too weak. The same kind of distance computed from
@@ -221,4 +221,4 @@ flow fields.
 
 ---
 
-[README](../README.md) · ← [12. The F1 wing](12-tyrrell026-sweep.md) · [Workflow](../README.md#workflow)
+[README](../README.md) · ← [12. The F1 wing](12-tyrrell026-sweep.md) · [14. The downforce alone](14-downforce-model.md) → · [Workflow](../README.md#workflow)

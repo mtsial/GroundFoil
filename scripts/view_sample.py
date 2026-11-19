@@ -39,6 +39,12 @@ gy = float(data["ground_y"]) if ground else np.nan  # NaN in --free-air samples
 if ground and np.isfinite(gy):
     NAMES[2] = ("Input: mask (airfoil + ground)", "gray_r")
 
+# The values belong to the grid points x = -0.5 + 2i/128, y = -1 + 2j/128 (dataGen.py and groundGen.py
+# sample there), so each pixel is centred on its point: half a cell (1/128) below and to the left of
+# the window [-0.5, 1.5] x [-1, 1].
+half = 1.0 / a.shape[1]
+extent = [-0.5 - half, 1.5 - half, -1 - half, 1 - half]
+
 fig, axes = plt.subplots(2, 3, figsize=(13, 8))
 for i, ax in enumerate(axes.flat):
     title, cmap = NAMES[i]
@@ -48,10 +54,9 @@ for i, ax in enumerate(axes.flat):
     # targets: centre the colour scale on zero so +/- regions are easy to compare
     if i >= 3:
         lim = np.abs(field).max()
-        im = ax.imshow(field, origin="lower", cmap=cmap, vmin=-lim, vmax=lim,
-                       extent=[-0.5, 1.5, -1, 1])
+        im = ax.imshow(field, origin="lower", cmap=cmap, vmin=-lim, vmax=lim, extent=extent)
     else:
-        im = ax.imshow(field, origin="lower", cmap=cmap, extent=[-0.5, 1.5, -1, 1])
+        im = ax.imshow(field, origin="lower", cmap=cmap, extent=extent)
     if -1 < gy < 1:
         ax.axhline(gy, color="k", lw=0.8)  # the ground
     ax.set_title(title)

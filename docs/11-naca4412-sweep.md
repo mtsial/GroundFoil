@@ -16,9 +16,11 @@ height.
 
 **The sweep.** The NACA 4412 is the airfoil of the LES comparison
 ([step 3](03-mesh-study.md)). It is neither among the 1,462 training airfoils
-nor among the 30 test airfoils. The closest training airfoil is the NACA 4415:
-the same camber line, but 15% thick instead of 12%, and only 4 of the 3,436
-samples.
+nor among the 30 test airfoils. Among the training airfoils, the NACA 4415 has
+the same camber line, but it is 15% thick instead of 12% (4 of the 3,436
+samples). The training airfoil closest in shape is goe623: its camber and
+thickness differ from the NACA 4412's by at most 0.4% of the chord, about the
+usual distance between neighbouring training airfoils (0.7% in the median).
 
 We ran it upside down at 5° and 30 m/s (Reynolds number 3 million), in free
 air and at 12 ride heights from h/c 0.05 to 0.6, evenly spaced on a log scale

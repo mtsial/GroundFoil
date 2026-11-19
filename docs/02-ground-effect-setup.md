@@ -62,7 +62,7 @@ The same case run with two levels of incoming turbulence, up to 3000 iterations:
 **What this shows:**
 - **500 iterations is not enough in ground effect.** The original dataset uses
   500, but Cl is then still 13–14% from its converged value. Getting within 0.5%
-  takes about 1,450 iterations, unless faster solver settings (SIMPLEC, being
+  takes 1,200–1,450 iterations, unless faster solver settings (SIMPLEC, being
   tested) reach the same answer sooner.
 - **The solver's residual limit is not a reliable stop signal.** One run stopped
   while Cl was still drifting. The other never stopped, although Cl had been

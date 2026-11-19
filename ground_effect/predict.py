@@ -195,8 +195,10 @@ def plot(path, fields, mask, outline, ground_y, title):
     for ax, (name, field, middle) in zip(axes, panels):
         f = np.ma.masked_where(mask.T, field.T)  # stored with the x index first; x horizontal
         lim = float(np.abs(f - middle).max())
+        half = 1 / unet_data.RES  # each pixel centred on its grid point x = -0.5 + 2i/128 (groundGen.grid_x)
+        ax.set_facecolor("#bbbbbb")  # the masked (solid) points, as grey as the drawn wing and ground
         im = ax.imshow(f, origin="lower", cmap="RdBu_r", norm=TwoSlopeNorm(middle, middle - lim, middle + lim),
-                       extent=[-0.5, 1.5, -1, 1])
+                       extent=[-0.5 - half, 1.5 - half, -1 - half, 1 - half])
         ax.add_patch(patches.Polygon(outline, closed=True, facecolor="#bbbbbb", edgecolor="#333333", lw=0.8))
         if -1 < ground_y < 1:
             ax.axhspan(-1, ground_y, color="#bbbbbb")

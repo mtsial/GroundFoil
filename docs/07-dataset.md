@@ -3,9 +3,9 @@
 [README](../README.md) · ← [6. Parameter scan](06-parameter-scan.md) · [8. U-Net learning curve](08-unet-learning-curve.md) → · [Workflow](../README.md#workflow)
 
 The training data: random airfoils at random angles of attack (0–10°), ride
-heights (h/c 0.05–0.6) and speeds (10–50 m/s), and a test set on 30 airfoils
-that are never used for training. 4000 runs gave 3,436 samples on 1,286
-different airfoils.
+heights (h/c 0.05–0.6) and speeds (10–50 m/s), and a test set from 30
+airfoils that are never used for training (its 102 samples come from 28 of
+them). 4000 runs gave 3,436 samples on 1,286 different airfoils.
 
 *Words used here: [glossary](glossary.md). References: [list](references.md).*
 
@@ -29,6 +29,17 @@ listed in `samples.csv`. Runs whose Cl does not become steady go to
 | Training, fourth 1000 runs | 5000–5003 | 1000 | 859 | 118 | 23 |
 | **Training, all** | | **4000** | **3,436** | **496** | **68** |
 | Test set (the 30 test airfoils) | 9000–9003 | 120 | 102 | 13 | 5 |
+
+**The test set.** Its 102 samples come from 28 of the 30 test airfoils: the
+one run of ah63k127 and the one of mue139 did not converge. Two test airfoils
+have almost the same shape as a training airfoil: goe439 (like goe428) and
+kc135d (like b707d) differ from it by at most 0.09% of the chord in camber and
+thickness, where only 3% of the training airfoils are as close to another one.
+They have 7 of the 102 test samples. Without them, the errors of step 13 and
+later are 3–5% higher (the U-Net's field error 0.89% instead of 0.87%, its
+downforce 4.0% instead of 3.9%; the small networks of steps 14 and 15 1.52%
+and 1.40% instead of 1.46% and 1.34%), so they flatter the test results only
+a little.
 
 So 86% of the runs give a sample (85–87% in each 1000), more than the 75–80%
 expected from the parameter scan. Of the 68 training runs that failed, 56

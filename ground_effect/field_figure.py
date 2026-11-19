@@ -108,6 +108,7 @@ def plot(args, rows):
             # the values belong to the grid points x = -0.5 + 2i/128 (groundGen.grid_x): centre each
             # pixel on its point, half a cell below and to the left of the window [-0.5, 1.5] x [-1, 1]
             half = 1 / unet_data.RES
+            ax.set_facecolor("#bbbbbb")  # the masked (solid) points, as grey as the drawn wing and ground
             im = ax.imshow(np.ma.masked_where(mask.T, field.T), origin="lower", cmap="RdBu_r", norm=norm,
                            extent=[-0.5 - half, 1.5 - half, -1 - half, 1 - half])
             ax.add_patch(patches.Polygon(outline, closed=True, facecolor="#bbbbbb", edgecolor="#333333", lw=0.8))

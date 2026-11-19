@@ -179,7 +179,7 @@ many as our coarse mesh:
   0.224, and 16–19% closer to the ground; CFL3D is 12–17% above. Zerihan put
   part of the gap down to the sparse tappings, which would miss the suction
   spike at the leading edge. But integrating our pressures only at the
-  tapping positions lowers our downforce by just 1.0–1.2%: the tappings catch
+  tapping positions lowers our downforce by just 1.1–1.4%: the tappings catch
   most of it. So the experiment's pressures themselves are lower. More likely
   causes are the differences between 2D RANS and the tunnel. The wing is
   finite (aspect ratio 4.9), and its tip vortices reduce the effective
@@ -210,8 +210,8 @@ many as our coarse mesh:
   roof makes this comparison less exact; see below). Our free air is 4.9%
   below CFL3D's. Free air is the one case where our 20-chord domain
   matters: in round 2 it lowered the NACA 4412's lift by 3.3% (lift ∝ 1/R).
-  A ground 3.36 chords away still adds 5.9% downforce, on all three meshes;
-  part of that is this domain effect.
+  A ground 3.36 chords away still adds 5.8–5.9% downforce on the three
+  meshes; part of that is this domain effect.
 - **Separation: right onset, too far forward.** As in the oil flow, the flow
   starts to separate at the trailing edge around h/c 0.224, and the
   separation moves forward as the wing gets lower. But ours lies 0.05–0.12
@@ -290,9 +290,12 @@ It is written with 200 points per surface.
 **What this means for the dataset:**
 - **The default mesh stays.** Its sampled flow fields are within 0.1–0.4%
   (pressure) of the fine mesh's down to h/c 0.313, 0.7–1.5% from 0.224 to
-  0.134 and 1.9–2.4% below; velocity within 0.4% everywhere. The U-Net's test
-  errors are about 15% (pressure) and 2.5% (velocity), 6 to 100 times larger.
-  The fine mesh would take 2.2 times as long.
+  0.134 and 1.9–2.4% below; velocity within 0.4% everywhere. The free-air
+  U-Net's test errors (step 1) are about 15% (pressure) and 2.5% (velocity),
+  6 to 150 times larger. Those of the final ground-effect U-Net
+  ([step 13](13-distance-input.md): 6.9% and 0.9%) are 3 to 70 (pressure) and
+  2 to 30 times (velocity) larger: closest to the ground the mesh's own error
+  is a third of the network's. The fine mesh would take 2.2 times as long.
 - **Separated flow close to the ground may not converge,** even at this
   moderate incidence: the default mesh failed at h/c 0.067, with 19% of the
   wing surface in reversed flow. The convergence test keeps such runs out of

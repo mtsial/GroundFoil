@@ -5,9 +5,9 @@
 We first reproduced the free-air study of Thuerey et al. (2020) on current
 software, to start from a working pipeline and a trusted model. With their data
 and network, trained on a laptop CPU, the test error is 2.96% with the paper's
-training length (paper: 2.6%), and the pressure and velocity errors match the
-paper's best model. The original code needed four fixes for OpenFOAM v2606 and
-gmsh 4 (last section).
+training length (paper: 2.6%). The pressure error matches the paper's best
+model, and the velocity error is close to it. The original code needed four
+fixes for OpenFOAM v2606 and gmsh 4 (last section).
 
 *Words used here: [glossary](glossary.md). References: [list](references.md).*
 
@@ -62,8 +62,11 @@ expects it in `Deep-Flow-Prediction/data/train` and `data/test`.
 | Training iterations | 10,000 (repo default) | 80,000 |
 | Hardware / time | Laptop CPU, 48 min | GPU |
 
-Relative error on the **90 unseen test airfoils**
-(`runTestCpu.py`, mean of |prediction − CFD| / |CFD|):
+Relative error on the **90 test samples** (3 on each of 30 airfoils that are
+not used for training), as `runTestCpu.py` computes it: for each sample, the
+sum of |prediction − CFD| over the grid divided by the sum of |CFD|, then the
+mean over the samples. The velocity error takes Ux and Uy together, so the
+larger Ux counts most:
 
 | Quantity | This run | Paper, largest model, 12.8k samples |
 |---|---|---|
@@ -102,7 +105,7 @@ also reports averages over 5 runs.
 | 4 | 18.29 | 2.99 | 3.63 |
 | 5 | 16.78 | 2.91 | 3.48 |
 | **Mean ± std** | **17.06 ± 0.94** | **2.85 ± 0.13** | **3.42 ± 0.18** |
-| Paper, largest model | 14.76 | about 2.4 | 2.6 |
+| Paper, largest model | 14.76 | 2.15 (Ux), 2.6 (Uy) | 2.6 |
 | Paper, smallest model | | | 3.3 |
 
 (std = sample standard deviation over the 5 runs.)
@@ -126,13 +129,15 @@ Same model, data and seed (1) as above. Only the training length changes, from
 | Quantity | 10k iterations, seed 1 | 10k, 5-seed mean | **80k iterations, seed 1** | Paper, largest model |
 |---|---|---|---|---|
 | Pressure | 17.41% | 17.06% | **14.86%** | 14.76% |
-| Velocity | 2.89% | 2.85% | **2.45%** | about 2.4% |
+| Velocity | 2.89% | 2.85% | **2.45%** | 2.15% (Ux), 2.6% (Uy) |
 | Combined | 3.50% | 3.42% | **2.96%** | 2.6% |
 
 **What this shows:**
 - Training 8× longer cuts the combined error by about 15% (3.50 → 2.96%).
-  Pressure and velocity now **match the paper's best model** almost exactly,
-  with 13× fewer parameters and half the training data.
+  The pressure error now **matches the paper's best model** (14.86 against
+  14.76%), with 13× fewer parameters and half the training data. The paper
+  gives the two velocity components separately (2.15% and 2.6%); our 2.45%
+  counts Ux most, so it is close to the paper's but probably a little higher.
 - The remaining gap in the combined number (2.96 vs 2.6%) is small.
 - The learning curve below shows the limit of `data_6k`: after about epoch 90
   the validation loss flattens (0.0043) while the training loss keeps falling

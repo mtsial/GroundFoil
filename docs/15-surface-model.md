@@ -7,7 +7,7 @@ which gives the whole flow, there is a middle way: the pressure and the
 friction along the wing's surface. That is what pushes on the wing, and what
 wind tunnels measure with pressure holes in the model. A small network that
 predicts these two curves, from the same inputs as step 14, gets the
-downforce of the 30 test airfoils within 1.3% of OpenFOAM's force: as close
+downforce of the 28 test airfoils within 1.3% of OpenFOAM's force: as close
 as the step 14 network, and three times closer than the U-Net. It also gives
 the drag (8.7% off on the test airfoils, 2–3% on the two wings), the moment
 (2.5%) and where the flow separates (the separated part of the surface, 10%
@@ -83,9 +83,9 @@ Against OpenFOAM's force, mean of the 2 seeds:
   the simulated drag itself carries about 10% numerical uncertainty, against
   0.04% for the downforce ([step 3](03-mesh-study.md)), so the drag targets
   are less certain than the downforce targets. For the median test sample,
-  the drag is 8.4% off.
-  The error grows with the ride height, as the drag gets smaller: 3.7% below
-  h/c 0.08, 17% above h/c 0.365. The largest errors are on the strut e864
+  the drag is 8.9% off (each model's error, then the mean of the 2, as in
+  the table). The error grows with the ride height, as the drag gets smaller:
+  4.9% below h/c 0.08, 18% above h/c 0.365. The largest errors are on the strut e864
   (Cl close to 0) and on bw3, which were also the U-Net's hardest samples.
 
 ## The two wings
@@ -103,7 +103,7 @@ Against OpenFOAM's force (mean of the 2 models; tables:
   height, the drag within 5%.
 - **The F1 wing's suction peak is too low.** The Tyrrell 026 has a sharp
   suction peak at about 20% of the chord, sharper than most airfoils in the
-  data. The model rounds it off (at h/c 0.067: −Cp 3.6 instead of 4.2), as
+  data. The model rounds it off (at h/c 0.067: −Cp 3.6–3.7 instead of 4.2), as
   the U-Net did in step 13, so its downforce is 1–3% low at every height.
   Here the model of step 14 and the U-Net are closer (1.2% off on average).
 

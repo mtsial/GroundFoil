@@ -5,7 +5,7 @@
 We trained the U-Net again on 3–100% of all 3,096 training samples, now with
 the loss weighted next to the wing ([step 9](09-downforce.md)). With all of
 them, the downforce computed from the predicted pressure is off by 6.2% on
-the 30 test airfoils, and the field error is 1.4% (the free-air model as it
+the 28 test airfoils, and the field error is 1.4% (the free-air model as it
 is: 121% and 20%). Both errors still fall as samples are added. The
 weighting matters more with more data: with the plain loss, the downforce
 error is 9.9%.
@@ -18,7 +18,7 @@ error is 9.9%.
 3,436 samples: 3,096 for training and 340 for validation. The validation
 samples are chosen by a checksum of the file name, so the 78 of
 [step 8](08-unet-learning-curve.md) are among them. The test samples are the
-same 102 as before, on 30 airfoils that are not in the training data.
+same 102 as before, on 28 airfoils that are not in the training data.
 
 **The errors** are those of [step 9](09-downforce.md):
 - the field error with the output set to 0 inside the wing and the ground

@@ -1,12 +1,12 @@
 # 14. The downforce alone: a model that skips the flow
 
-[README](../README.md) · ← [13. The exact wing shape](13-distance-input.md) · [Workflow](../README.md#workflow)
+[README](../README.md) · ← [13. The exact wing shape](13-distance-input.md) · [15. The pressure along the wing](15-surface-model.md) → · [Workflow](../README.md#workflow)
 
 The U-Net gets the downforce by adding up its predicted pressure around the
 wing. Would a simpler model that predicts only the downforce do better? It
 does. A small network that takes the airfoil's shape, the ride height, the
 angle and the speed, trained on the same 3,096 samples, predicts the
-downforce of the 30 test airfoils with a 1.6% error, against the U-Net's 3.9%.
+downforce of the 28 test airfoils with a 1.6% error, against the U-Net's 3.9%.
 Compared with OpenFOAM's own force, it is 1.5% against 4.3%, and it is closer
 on 92 of the 102 test samples. It is better at every ride height and angle.
 On the two wings that neither model saw, both are 1.2% off on average on the
@@ -40,7 +40,8 @@ layer), depth (2, 3 or 4 layers), weight decay (3 values) and learning rate
 GPUs. Only the validation samples chose. The best is 4 layers of 128 neurons
 (58,497 weights; the U-Net has 2.3 million). The three best combinations all
 have this size, so the choice is not a fluke of one setting, and the higher
-learning rate was always worse. The U-Net itself was not tuned: it is
+learning rate was worse in all 27 pairs (in 24 of the 27 in the second
+tuning, below, which also chose 4 layers of 128). The U-Net itself was not tuned: it is
 Thuerey et al.'s network.
 
 **Two ways to compare.** Until now we compared the U-Net's Cl with Cl from the
@@ -77,9 +78,11 @@ the 2 seeds).
   force: 1.43% and 1.49%).
 - **At every ride height and angle.** By ride height, against OpenFOAM's
   force, the small network's error is 0.7–1.7%, and 3.4% below h/c 0.08; the
-  U-Net's is 2.7–6.4%, and 6.2% below h/c 0.08. Both are worst there, close
-  to the ground, where the flow separates. By angle, it is 0.9–1.9% against
-  2.8–7.1%.
+  U-Net's is 2.7–6.4%, and 6.2% below h/c 0.08. Both are worst close to the
+  ground, where the flow separates, once the strut e864 is set aside: its
+  two samples, at h/c 0.27 and 0.33 with Cl close to 0, give the U-Net's
+  6.4% at h/c 0.22–0.365 (3.7% without them; the small network's 1.7% would
+  be 0.8%). By angle (bins of 2°), it is 0.8–1.9% against 2.8–7.0%.
 - **Much smaller and faster.** One prediction takes 0.13 ms on one CPU
   thread, against 46 ms for the U-Net and a median of 318 s for one
   simulation on one core.
@@ -127,4 +130,4 @@ U-Net's flow.
 
 ---
 
-[README](../README.md) · ← [13. The exact wing shape](13-distance-input.md) · [Workflow](../README.md#workflow)
+[README](../README.md) · ← [13. The exact wing shape](13-distance-input.md) · [15. The pressure along the wing](15-surface-model.md) → · [Workflow](../README.md#workflow)

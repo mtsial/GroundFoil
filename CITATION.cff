@@ -16,7 +16,9 @@ abstract: >-
   ground, boundary-layer mesh), its verification and validation (high-resolution LES of
   a NACA 4412, wind-tunnel tests of the Tyrrell 026 wing, grid convergence), the
   smoothing of 1,462 UIUC airfoils, a parameter scan of where steady RANS converges in
-  ground effect, and the code that trains and tests the U-Net on the ground-effect data.
+  ground effect, the code that trains and tests the U-Net on the ground-effect data, and
+  two smaller models for comparison: one that predicts only the downforce, and one that
+  predicts the pressure and the friction along the wing's surface.
 keywords:
   - computational fluid dynamics
   - RANS

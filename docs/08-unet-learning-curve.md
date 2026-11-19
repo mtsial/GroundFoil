@@ -4,7 +4,7 @@
 
 We trained the U-Net of the reproduction on the ground-effect samples, from
 random weights and from the free-air model, on 12.5–100% of the 789 training
-samples, and tested every model on the 30 test airfoils it has not seen. With
+samples, and tested every model on 102 samples of 28 airfoils it has not seen. With
 all 789 samples the error is 1.8% (the free-air model as it is: 24%), and it is
 still falling as samples are added. Starting from the free-air model helps most
 when data are scarce.
@@ -46,7 +46,7 @@ validation. The test set, 120 runs on the 30 test airfoils, gave 102 samples
 We trained models on 12.5, 25, 50 and 100% of the 789 training samples,
 each from random weights and from the free-air model of Run 3 (transfer
 learning), with 2 seeds, and tested them all on the 102 test samples, whose
-30 airfoils are not in the training data (`learning_curve.py`). The 16 runs
+28 airfoils are not in the training data (`learning_curve.py`). The 16 runs
 of 80,000 iterations took about 3 hours on Kaggle's two Tesla T4 GPUs (see
 [How to run it](howto.md)).
 
@@ -84,7 +84,10 @@ points at most):
   conditions.
 - **The pressure is hardest closest to the ground.** For h/c 0.05–0.08 its
   error is 15–16% on both the test and the validation samples, against 8–11%
-  from h/c 0.135 up (models from the free-air model, 789 samples).
+  from h/c 0.135 up (models from the free-air model, 789 samples). On the
+  test samples this holds without e864: its two samples, at h/c 0.27 and
+  0.33, have pressure errors of 60% and 85% and raise the mean of h/c
+  0.22–0.365 from 10% to 15%.
 
 ---
 
