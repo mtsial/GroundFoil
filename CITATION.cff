@@ -6,7 +6,7 @@ authors:
   - given-names: "Muhammad Taimoor Aslam"
     family-names: "Sial"
     orcid: "https://orcid.org/0009-0007-2268-1977"
-repository-code: "https://github.com/taimooraslam22g/GroundFoil"
+repository-code: "https://github.com/mtsial/GroundFoil"
 license: Apache-2.0
 abstract: >-
   GroundFoil predicts the RANS flow (pressure and velocity) around inverted airfoils in

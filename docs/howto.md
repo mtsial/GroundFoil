@@ -135,7 +135,7 @@ iteration) and about 21 minutes when Kaggle's two T4s run one each
 2. Make a notebook with that dataset, choose the accelerator "GPU T4 x2" and
    turn on internet access. Put this in a cell:
    ```python
-   !git clone https://github.com/taimooraslam22g/GroundFoil.git
+   !git clone https://github.com/mtsial/GroundFoil.git
    %cd GroundFoil/ground_effect
    import glob, os
    model = glob.glob("/kaggle/input/**/long80k_modelG", recursive=True)[0]
@@ -343,7 +343,7 @@ datasets of samples). Then a notebook with both datasets (the samples and the
 airfoil files), "GPU T4 x2" and internet on, and this cell. It takes about
 6–7 hours, so start it with "Save & Run All (Commit)":
 ```python
-!git clone https://github.com/taimooraslam22g/GroundFoil.git
+!git clone https://github.com/mtsial/GroundFoil.git
 %cd GroundFoil/ground_effect
 !git log -1 --format="code version %h: %s"
 import glob, os, subprocess
