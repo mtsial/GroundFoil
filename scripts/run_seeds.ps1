@@ -1,6 +1,6 @@
 # Train and test the U-Net several times with different random seeds, one after another.
 #
-# Usage (from C:\Users\boy10\Project2):
+# Usage (from the project folder):
 #     powershell -ExecutionPolicy Bypass -File scripts\run_seeds.ps1
 #     powershell -ExecutionPolicy Bypass -File scripts\run_seeds.ps1 -Seeds 1,2,3
 #
@@ -15,8 +15,9 @@ param(
     [int[]]$Seeds = @(1, 2, 3, 4, 5)
 )
 
-$python = "C:\Users\boy10\Project2\.venv\Scripts\python.exe"
-$train  = "C:\Users\boy10\Project2\Deep-Flow-Prediction\train"
+$root   = Split-Path -Parent $PSScriptRoot  # the project folder (this script is in scripts\)
+$python = Join-Path $root ".venv\Scripts\python.exe"
+$train  = Join-Path $root "Deep-Flow-Prediction\train"
 Set-Location $train
 
 foreach ($seed in $Seeds) {
@@ -38,4 +39,4 @@ foreach ($seed in $Seeds) {
 }
 
 Write-Host "`nAll seeds finished. Summary:"
-& $python C:\Users\boy10\Project2\scripts\summarize_seeds.py $train
+& $python (Join-Path $root "scripts\summarize_seeds.py") $train

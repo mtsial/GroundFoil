@@ -17,6 +17,7 @@ dataset, and the training on Kaggle.
 - [Parameter scan and dataset](#parameter-scan-and-dataset)
 - [Training the U-Net](#training-the-u-net)
 - [Ride-height sweeps of new wings](#ride-height-sweeps-of-new-wings)
+- [The published data (Zenodo)](#the-published-data-zenodo)
 - [Notes](#notes)
 
 ---
@@ -426,6 +427,32 @@ Kaggle. Give the seven sizes of the notebook: without `--fractions`,
 copy data\unet\final\cl_learning_curve.csv ..\results\downforce_learning_curve_final.csv
 ```
 The results are in [All the data: the final models](16-final-models.md).
+
+## The published data (Zenodo)
+
+The samples, the final models and the NACA 4412 sweep are on Zenodo,
+https://doi.org/10.5281/zenodo.24424329; its README describes every file.
+Download the files into the project folder, check them (in Git Bash; every
+line should say OK), and unzip them where the commands on this page expect
+them:
+```bash
+sha256sum -c SHA256SUMS.txt
+```
+```powershell
+.venv\Scripts\python.exe -m zipfile -e groundfoil_samples.zip ground_effect\data\dataset
+.venv\Scripts\python.exe -m zipfile -e groundfoil_models.zip ground_effect\data\unet
+.venv\Scripts\python.exe -m zipfile -e sweep_naca4412.zip ground_effect\data
+```
+The airfoil files are not on Zenodo, as the UIUC database states no terms for
+passing them on: make them as in [Airfoil smoothing](#airfoil-smoothing-on-windows),
+then check them against the list from Zenodo (in Git Bash, in the folder
+`data`; every line should say OK):
+```bash
+sha256sum -c ../airfoil_checksums.txt
+```
+The commands after the final run (above) and those below then work as they
+are, without the Tyrrell 026 wing: its coordinates and its sweep are not
+public, so leave out `data\sweep_tyrrell026` and the commands that need it.
 
 ## Predictions for any wing, and pictures of the flow
 
