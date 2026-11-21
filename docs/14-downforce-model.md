@@ -83,9 +83,10 @@ the 2 seeds).
   two samples, at h/c 0.27 and 0.33 with Cl close to 0, give the U-Net's
   6.4% at h/c 0.22–0.365 (3.7% without them; the small network's 1.7% would
   be 0.8%). By angle (bins of 2°), it is 0.8–1.9% against 2.8–7.0%.
-- **Much smaller and faster.** One prediction takes 0.13 ms on one CPU
-  thread, against 46 ms for the U-Net and a median of 318 s for one
-  simulation on one core.
+- **Much smaller and faster.** From the airfoil file, one prediction takes
+  under a millisecond on one CPU thread, against about 30 ms for the U-Net
+  and a median of 318 s for one simulation on one core (timed in
+  [step 16](16-final-models.md)).
 
 ## The two wings
 

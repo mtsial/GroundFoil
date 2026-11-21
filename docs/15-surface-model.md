@@ -1,6 +1,6 @@
 # 15. The pressure along the wing: a model of the surface
 
-[README](../README.md) · ← [14. The downforce alone](14-downforce-model.md) · [Workflow](../README.md#workflow)
+[README](../README.md) · ← [14. The downforce alone](14-downforce-model.md) · [16. All the data](16-final-models.md) → · [Workflow](../README.md#workflow)
 
 Between the small network of step 14, which gives one number, and the U-Net,
 which gives the whole flow, there is a middle way: the pressure and the
@@ -20,7 +20,7 @@ its suction peak is too low, as the U-Net's was, so the downforce comes out
 ---
 
 **The data** (`surface_data.py`). Every sample stores OpenFOAM's pressure and
-wall friction at the middle of each face of the mesh on the wing (404–450
+wall friction at the middle of each face of the mesh on the wing (402–505
 faces), in the mesh's own order. To use them we rebuilt the surface exactly as
 the simulation saw it, because three small differences each cost several
 percent of the drag:
@@ -128,4 +128,4 @@ the three models, with a tuning of the surface model like that of step 14.
 
 ---
 
-[README](../README.md) · ← [14. The downforce alone](14-downforce-model.md) · [Workflow](../README.md#workflow)
+[README](../README.md) · ← [14. The downforce alone](14-downforce-model.md) · [16. All the data](16-final-models.md) → · [Workflow](../README.md#workflow)

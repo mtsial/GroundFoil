@@ -199,8 +199,10 @@ the notebook next to the dataset of samples ("Add Input"). Then, with
 `model` and `data` found as above, the 4 runs with all the samples and the
 wall weighting (under an hour):
 ```python
-smooth = glob.glob("/kaggle/input/**/airfoil_database_smooth", recursive=True)[0]
-test_smooth = glob.glob("/kaggle/input/**/airfoil_database_test_smooth", recursive=True)[0]
+smooth = glob.glob("/kaggle/input/**/airfoil_database_smooth", recursive=True)
+test_smooth = glob.glob("/kaggle/input/**/airfoil_database_test_smooth", recursive=True)
+assert smooth and test_smooth, "add the dataset of airfoil files (groundfoil_airfoils.zip) to the notebook"
+smooth, test_smooth = smooth[0], test_smooth[0]
 !python learning_curve.py --data {data}/train --test {data}/test --pretrained {model} --gpus 2 --fractions 1 --wall-weight 10 --distance --airfoil-dirs {smooth} {test_smooth} --out /kaggle/working/distance
 ```
 The same with the distance computed from the mask instead (the 2 runs from
@@ -350,8 +352,10 @@ import glob, os, subprocess
 w0 = glob.glob("/kaggle/input/**/train/w0", recursive=True)
 assert len(w0) == 1, w0  # exactly one dataset of samples
 data = os.path.dirname(os.path.dirname(w0[0]))
-smooth = glob.glob("/kaggle/input/**/airfoil_database_smooth", recursive=True)[0]
-test_smooth = glob.glob("/kaggle/input/**/airfoil_database_test_smooth", recursive=True)[0]
+smooth = glob.glob("/kaggle/input/**/airfoil_database_smooth", recursive=True)
+test_smooth = glob.glob("/kaggle/input/**/airfoil_database_test_smooth", recursive=True)
+assert smooth and test_smooth, "add the dataset of airfoil files (groundfoil_airfoils.zip) to the notebook"
+smooth, test_smooth = smooth[0], test_smooth[0]
 n = len([f for f in glob.glob(f"{data}/train/**/*.npz", recursive=True) if "not_converged" not in f])
 print(f"{n} training samples (the validation samples among them)")
 assert n > 5000, "an older version of the dataset?"
@@ -385,38 +389,75 @@ print("exit codes:", [p.wait() for p in procs])
 # 4. A check: does the U-Net with all the samples gain from twice the training? (about 45 min)
 !python learning_curve.py {unet} --fractions 1 --iterations 160000 --out {out}/final_unet_160k
 ```
-Each part writes its results as it goes and skips the finished ones when run
-again, so after an interruption the same cell goes on where it stopped.
+Each part writes its results as it goes and skips the finished ones when it
+is run again. A new Kaggle session starts with an empty `/kaggle/working`,
+though: to go on after an interruption, add the stopped version's output to
+the notebook as an input and copy it into `/kaggle/working` before running
+the cell again. (Our run took 8 h 15 min: the Gaussian processes of part 3
+took 2.5 h, not 1 h.)
+
+Then, on Windows: unzip the output into `ground_effect\data\unet\final\`,
+without the folder `GroundFoil` (the code). The training samples are those
+of the dataset zip:
+```powershell
+cd ground_effect
+..\.venv\Scripts\python.exe -c "import zipfile; z = zipfile.ZipFile('../data/kaggle/ground_effect_final.zip'); n = sorted(x[6:] for x in z.namelist() if x.startswith('train/') and x.endswith('.npz') and 'not_converged' not in x); open('data/unet/final/train_files.txt', 'w').write(chr(10).join(n) + chr(10))"
+```
+The sweeps with the final U-Nets; the small networks and the surface model
+loaded again (`--load`; each first checks that its models give here what
+they gave on Kaggle), with their sweeps and comparisons; and the figures
+(about 5 minutes in all):
+```powershell
+..\.venv\Scripts\python.exe sweep_report.py --model data\unet\final\final_unet\f1_scratch_s0\model.pt data\unet\final\final_unet\f1_scratch_s1\model.pt --label "U-Net with the distance input, all the samples" --plot ..\results\sweep_naca4412_final.png --csv ..\results\sweep_naca4412_final.csv
+..\.venv\Scripts\python.exe sweep_report.py --sweep data\sweep_tyrrell026 --model data\unet\final\final_unet\f1_scratch_s0\model.pt data\unet\final\final_unet\f1_scratch_s1\model.pt --label "U-Net with the distance input, all the samples" --plot ..\results\sweep_tyrrell026_final.png --csv ..\results\sweep_tyrrell026_final.csv
+foreach ($d in "baseline_cl", "baseline_cl_openfoam") { ..\.venv\Scripts\python.exe baseline_cl.py --data data\dataset\train --files data\unet\final\train_files.txt --test data\dataset\test --out data\unet\final\$d --load --sweep data\sweep_naca4412 data\sweep_tyrrell026 --compare data\unet\final\final_unet\f1_scratch_s0 data\unet\final\final_unet\f1_scratch_s1 }
+..\.venv\Scripts\python.exe downforce_report.py --baseline data\unet\final\baseline_cl_openfoam --unet-sweeps ..\results\sweep_tyrrell026_final.csv ..\results\sweep_naca4412_final.csv --plot ..\results\downforce_model_final.png --csv ..\results\downforce_model_final.csv
+..\.venv\Scripts\python.exe surface_model.py --data data\dataset\train --files data\unet\final\train_files.txt --test data\dataset\test --out data\unet\final\surface_model --load --sweep data\sweep_naca4412 data\sweep_tyrrell026 --compare-net data\unet\final\baseline_cl_openfoam --compare-unet data\unet\final\final_unet\f1_scratch_s0 data\unet\final\final_unet\f1_scratch_s1
+..\.venv\Scripts\python.exe surface_report.py --model data\unet\final\surface_model\s0 --test data\dataset\test --pick 50 90 --samples data\sweep_tyrrell026\h0134\tyrrell026_h0134_a+0345_U0100.npz data\sweep_tyrrell026\h0067\tyrrell026_h0067_a+0345_U0100.npz --plot ..\results\surface_model_cp_final.png
+copy data\unet\final\surface_model\sweep_naca4412.csv ..\results\sweep_naca4412_surface_model_final.csv
+copy data\unet\final\surface_model\sweep_tyrrell026.csv ..\results\sweep_tyrrell026_surface_model_final.csv
+..\.venv\Scripts\python.exe learning_curve.py --out data\unet\final\final_unet --report-only --measures all_zeroed p_near_wing cl --plot ..\results\ground_learning_curve_final.png --title "U-Net error in ground effect against the amount of training data: the final models (distance input, random starting weights)"
+```
+The U-Net's rows of the downforce learning curve go into the table from
+Kaggle. Give the seven sizes of the notebook: without `--fractions`,
+`cl_learning_curve.py` takes the six of step 15 and leaves out 97 samples.
+```powershell
+..\.venv\Scripts\python.exe cl_learning_curve.py --data data\dataset\train --files data\unet\final\train_files.txt --test data\dataset\test --models --unet data\unet\final\final_unet --fractions 1 0.5 0.25 0.125 0.0625 0.03125 0.015625 --csv data\unet\final\cl_learning_curve.csv --plot ..\results\downforce_learning_curve_final.png --unet-label "U-Net with the distance input, from its pressure"
+copy data\unet\final\cl_learning_curve.csv ..\results\downforce_learning_curve_final.csv
+```
+The results are in [All the data: the final models](16-final-models.md).
 
 ## Predictions for any wing, and pictures of the flow
 
 `predict.py` runs the U-Net for an airfoil file (or `nacaXXXX`, or an airfoil
 of the dataset's folders), a ride height, an angle and a speed, without a
 simulation: it prints -Cl from each model and draws the flow. It builds the
-inputs as the dataset has them; on the 102 test samples, its downforce is
-within 0.13% on average of that from the simulation's own inputs. One
-prediction takes about 46 ms on one CPU thread (a simulation: a median of
-318 s on one core):
+inputs as the dataset has them; on the 102 test samples, the final U-Nets'
+downforce is within 0.10% on average of that from the simulation's own
+inputs. On one CPU thread with nothing else running, a prediction takes
+15 ms, plus 12 ms to build the inputs (a simulation: a median of 318 s on
+one core; the timings are in [step 16](16-final-models.md)):
 ```powershell
 cd ground_effect
-..\.venv\Scripts\python.exe predict.py --airfoil naca4412 --h 0.1 --alpha 4 --U 30 --model data\unet\distance\f1_scratch_s0\model.pt data\unet\distance\f1_scratch_s1\model.pt --plot flow.png
+..\.venv\Scripts\python.exe predict.py --airfoil naca4412 --h 0.1 --alpha 4 --U 30 --model data\unet\final\final_unet\f1_scratch_s0\model.pt data\unet\final\final_unet\f1_scratch_s1\model.pt --plot flow.png
 ```
 It also runs the two small networks, alone or with the U-Net: the network
 for the downforce alone ([step 14](14-downforce-model.md); `--force-model`,
 its model folders) and the surface model ([step 15](15-surface-model.md);
 `--surface-model`), which gives Cl, Cd and Cm and, with `--plot-surface`,
 draws its pressure and friction along the chord. From the geometry alone,
-both give the predictions they stored for the 102 test samples and the two
-sweeps within 5e-6 (the rounding of those tables). Each takes under a
-millisecond, and adding up the surface model's forces 2 ms:
+both give the predictions they stored for the 102 test samples within 5e-6
+(the rounding of those tables). From the airfoil file, the network for the
+downforce takes 0.65 ms, and the surface model 0.72 ms, or 2.5 ms with its
+forces added up:
 ```powershell
-..\.venv\Scripts\python.exe predict.py --airfoil naca4412 --h 0.1 --alpha 4 --U 30 --force-model data\unet\baseline_cl_openfoam\s0 data\unet\baseline_cl_openfoam\s1 --surface-model data\unet\surface_model\s0 data\unet\surface_model\s1 --plot-surface surface.png
+..\.venv\Scripts\python.exe predict.py --airfoil naca4412 --h 0.1 --alpha 4 --U 30 --force-model data\unet\final\baseline_cl_openfoam\s0 data\unet\final\baseline_cl_openfoam\s1 --surface-model data\unet\final\surface_model\s0 data\unet\final\surface_model\s1 --plot-surface surface.png
 ```
 `field_figure.py` shows simulated and predicted fields side by side, with their
 difference, for test samples chosen by their error (here at the 10th, 50th
 and 90th percentile) and for any other sample:
 ```powershell
-..\.venv\Scripts\python.exe field_figure.py --model data\unet\distance\f1_scratch_s0\model.pt --test data\dataset\test --pick 10 50 90 --samples data\sweep_tyrrell026\h0134\tyrrell026_h0134_a+0345_U0100.npz --quantity p --plot fields_p.png
+..\.venv\Scripts\python.exe field_figure.py --model data\unet\final\final_unet\f1_scratch_s0\model.pt --test data\dataset\test --pick 10 50 90 --samples data\sweep_tyrrell026\h0134\tyrrell026_h0134_a+0345_U0100.npz --quantity p --plot fields_p.png
 ```
 
 ## Notes

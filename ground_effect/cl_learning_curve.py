@@ -42,6 +42,7 @@ import unet_data
 from train_unet import split
 
 FRACTIONS = (0.03125, 0.0625, 0.125, 0.25, 0.5, 1.0)  # as learning_curve.py: 97 ... 3,096 samples
+UNET_LABEL = "U-Net, from its pressure (loss of step 10)"  # the U-Net runs of step 15's figure
 COLUMNS = ["model", "n_train", "fraction", "seed", "seconds"] + [
     f"{s}_{k}" for s in ("val", "test") for k in ("cl_error", "cl_median", "cl_r2", "within_2sd", "mean_sd_rel")]
 BLUE, ORANGE, AQUA, INK, GRID = "#2a78d6", "#eb6834", "#1baf7a", "#333333", "#d9d9d9"
@@ -62,6 +63,7 @@ def parse(argv=None):
     ap.add_argument("--gp-components", type=int, default=0, help="principal components of the shape for the Gaussian process (0: all 64 numbers)")
     ap.add_argument("--unet", help="learning_curve.py folder of U-Net runs to compare with (f<fraction>_scratch_s<seed>)")
     ap.add_argument("--unet-extra", nargs="*", default=[], help="single U-Net runs to show too (with all the samples)")
+    ap.add_argument("--unet-label", default=UNET_LABEL, help=f"the U-Net's name in the figure (default: {UNET_LABEL})")
     ap.add_argument("--threads", type=int, default=2, help="CPU threads for torch (default 2)")
     ap.add_argument("--device", default="auto", help="cpu, cuda, or auto (default: a GPU if there is one)")
     ap.add_argument("--plot", help="draw the figure into this image")
@@ -242,7 +244,7 @@ def read_rows(path):
 def main(argv=None):
     args = parse(argv)
     if args.from_csv:  # only the figure, from a table written before
-        plot(read_rows(args.from_csv), args.plot)
+        plot(read_rows(args.from_csv), args.plot, args.unet_label)
         return
     torch.set_num_threads(args.threads)
     if args.device == "auto":
@@ -301,15 +303,15 @@ def main(argv=None):
                 print(f"unet + distance n={len(all_train)} ({run}): Cl error test {100 * rows[-1]['test_cl_error']:.2f}%")
     print("saved", path)
     if args.plot:
-        plot(rows, args.plot)
+        plot(rows, args.plot, args.unet_label)
 
 
-def plot(rows, path):
+def plot(rows, path, unet_label=None):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     fig, ax = plt.subplots(figsize=(7.5, 5))
-    series = [("unet", ORANGE, "s", "-", "U-Net, from its pressure (loss of step 10)"),
+    series = [("unet", ORANGE, "s", "-", unet_label or UNET_LABEL),
               ("network", AQUA, "^", "-", "small network (step 14)"), ("gp", BLUE, "o", "-", "Gaussian process")]
     series += [(m, BLUE, "o", "--", f"Gaussian process, shape as {m[2:]} numbers")
                for m in sorted({r["model"] for r in rows if r["model"].startswith("gp") and r["model"] != "gp"})]
