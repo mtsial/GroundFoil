@@ -236,10 +236,11 @@ Deep-Flow-Prediction/       the original code, which you clone here (see Quick s
 
 To cite this repository: M. T. A. Sial, *GroundFoil: deep learning for
 inverted airfoils in ground effect*, Zenodo,
-https://doi.org/10.5281/zenodo.24176980 (all versions; v0.1.0, under its first
-title *Deep Flow Prediction on OpenFOAM v2606, extended to inverted airfoils in
-ground effect*, is https://doi.org/10.5281/zenodo.24176981). GitHub's "Cite
-this repository" button gives the same in other formats.
+https://doi.org/10.5281/zenodo.24176980 (all versions; v1.0.0, the version of
+the final results, is https://doi.org/10.5281/zenodo.24425137; v0.1.0, under
+its first title *Deep Flow Prediction on OpenFOAM v2606, extended to inverted
+airfoils in ground effect*, is https://doi.org/10.5281/zenodo.24176981).
+GitHub's "Cite this repository" button gives the same in other formats.
 
 To cite the dataset and the trained models: M. T. A. Sial, *GroundFoil dataset:
 RANS simulations of inverted airfoils in ground effect, and trained surrogate
