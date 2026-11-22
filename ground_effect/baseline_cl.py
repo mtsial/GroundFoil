@@ -6,7 +6,9 @@ The samples are the U-Net's: those in --data (or only those listed in --files), 
 training and validation samples as train_unet.py splits them (unet_data.is_validation), and those
 in --test. By default the network learns Cl from the simulated pressure on the U-Net's 128 x 128
 grid (unet_data.lift), the Cl that the U-Net's is compared with, so the errors compare directly;
---target openfoam makes it learn OpenFOAM's own Cl instead.
+--target openfoam makes it learn OpenFOAM's own Cl instead, and --target cd OpenFOAM's drag
+coefficient Cd: a network for the drag alone, to compare with the drag that surface_model.py adds up
+from its pressure and friction along the wing (the U-Net gives no drag, so --compare does not apply).
 
 The network sees, for each sample:
 - the shape, from the airfoil file the simulation used (unet_data.AIRFOIL_DIRS): the camber line
@@ -25,10 +27,11 @@ samples play no part in it. --sweep adds the ride-height sweeps (folders of swee
 sweep_tyrrell026.sh), and --compare U-Net runs (folders with errors_test.csv and errors_val.csv of
 train_unet.py) to compare with, sample by sample.
 
-Writes into --out: search_runs.csv and search.csv (with --search); s<seed>/model.pt,
-errors_val.csv and errors_test.csv (file, airfoil, h_over_c, alpha_deg, U, clipped, cl_cfd = the Cl
-learnt, cl_grid, cl_openfoam, cl_pred) and summary.json (settings, input scales, errors);
-sweep_<name>.csv; compare.json (with --compare).
+Writes into --out: search_runs.csv and search.csv (with --search; with --target cd the columns
+named val_cl_error hold the Cd error); s<seed>/model.pt, errors_val.csv and errors_test.csv (file,
+airfoil, h_over_c, alpha_deg, U, clipped, cl_cfd = the Cl learnt, cl_grid, cl_openfoam, cl_pred; with
+--target cd: cd_openfoam, cd_pred instead of the four Cl columns) and summary.json (settings, input
+scales, errors); sweep_<name>.csv; compare.json (with --compare).
 
 On a GPU (--device auto takes one if there is one; with --jobs, the models are spread over all the
 GPUs) a model takes well under a minute; on one CPU thread 2-15 minutes, by its size. --load takes
@@ -38,6 +41,8 @@ that they give the same Cl here, and adds --sweep and --compare, which need file
 On Kaggle (see the README), then on Windows, from the ground_effect folder:
     !python baseline_cl.py --data {data}/train --test {data}/test --airfoil-dirs {smooth} {test_smooth} --search --jobs 4 --out /kaggle/working/baseline_cl
     ..\\.venv\\Scripts\\python.exe baseline_cl.py --data data\\dataset\\train --files data\\unet\\baseline_cl\\train_files.txt --test data\\dataset\\test --load --out data\\unet\\baseline_cl --sweep data\\sweep_naca4412 data\\sweep_tyrrell026 --compare data\\unet\\distance\\f1_scratch_s0 data\\unet\\distance\\f1_scratch_s1
+The network for the drag (docs step 17), on the laptop, with the settings chosen for the downforce:
+    ..\\.venv\\Scripts\\python.exe baseline_cl.py --data data\\dataset\\train --files data\\unet\\final\\train_files.txt --test data\\dataset\\test --target cd --width 256 --depth 4 --weight-decay 1e-3 --lr 1e-3 --seeds 0 1 --threads 8 --out data\\unet\\final\\baseline_cd --sweep data\\sweep_naca4412 data\\sweep_tyrrell026
 """
 import argparse
 import csv
@@ -66,8 +71,9 @@ def parse(argv=None):
     ap.add_argument("--test", required=True, help="folder with the test samples")
     ap.add_argument("--out", required=True, help="folder for the results")
     ap.add_argument("--val-percent", type=float, default=10, help="percent of the samples kept for validation (default 10, as train_unet.py)")
-    ap.add_argument("--target", choices=("grid", "openfoam"), default="grid",
-                    help="the Cl to learn: from the simulated pressure on the U-Net's grid (default) or OpenFOAM's")
+    ap.add_argument("--target", choices=("grid", "openfoam", "cd"), default="grid",
+                    help="what to learn: Cl from the simulated pressure on the U-Net's grid (default), OpenFOAM's Cl, "
+                         "or OpenFOAM's Cd (cd)")
     ap.add_argument("--stations", type=int, default=32, help="points along the chord for the camber and the thickness (default 32)")
     ap.add_argument("--width", type=int, default=256, help="neurons per hidden layer (default 256)")
     ap.add_argument("--depth", type=int, default=3, help="hidden layers (default 3)")
@@ -132,7 +138,15 @@ def record(folder, rel, airfoil_dirs, n, shapes):
         return {"file": rel, "airfoil": name, "h": float(outline[:, 1].min() - ground_y), "h_file": float(d["h"]),
                 "alpha": float(d["alpha"]), "U": float(d["U"]), "clipped": bool(d["clipped"]),
                 "cl_grid": float(unet_data.lift(p, inputs[2] > 0.5)), "cl_openfoam": float(d["Cl"]),
-                "shape": shapes[name]}
+                "cd_openfoam": float(d["Cd"]), "shape": shapes[name]}
+
+
+QUANTITY = {"grid": "Cl", "openfoam": "Cl", "cd": "Cd"}  # the coefficient each --target learns
+
+
+def target_key(target):
+    """The key of the coefficient learnt in a record: cl_grid, cl_openfoam or cd_openfoam."""
+    return "cd_openfoam" if target == "cd" else "cl_" + target
 
 
 def features(recs):
@@ -165,13 +179,14 @@ def load_sets(args):
 
 
 def scale(sets, target):
-    """Tensors of the scaled inputs and Cl of each set, and the scales (from the training samples)."""
+    """Tensors of the scaled inputs and Cl of each set, and the scales (from the training samples).
+    'cl' is the coefficient learnt: Cd with --target cd."""
     x_train = features(sets["train"])
     mean, std = x_train.mean(axis=0), np.maximum(x_train.std(axis=0), 1e-12)
-    cl_train = np.array([r["cl_" + target] for r in sets["train"]])
+    cl_train = np.array([r[target_key(target)] for r in sets["train"]])
     out = {"scale": {"x_mean": mean, "x_std": std, "y_mean": float(cl_train.mean()), "y_std": float(cl_train.std())}}
     for name, recs in sets.items():
-        cl = np.array([r["cl_" + target] for r in recs])
+        cl = np.array([r[target_key(target)] for r in recs])
         out[name] = {"x": torch.tensor((features(recs) - mean) / std, dtype=torch.float32), "cl": cl,
                      "y": torch.tensor((cl - out["scale"]["y_mean"]) / out["scale"]["y_std"], dtype=torch.float32)}
     return out
@@ -322,9 +337,20 @@ def search(args, data):
 
 # ---------------------------------------------------------------- results
 
+def pred_column(target):
+    """The column of errors_<set>.csv with the predicted coefficient."""
+    return "cd_pred" if target == "cd" else "cl_pred"
+
+
 def write_errors(path, recs, cl_pred, target):
     with open(path, "w", newline="") as f:
         w = csv.writer(f)
+        if target == "cd":  # Cd is about 0.01-0.05: one decimal more than Cl
+            w.writerow(["file", "airfoil", "h_over_c", "alpha_deg", "U", "clipped", "cd_openfoam", "cd_pred"])
+            for r, c in zip(recs, cl_pred):
+                w.writerow([r["file"], r["airfoil"], f"{r['h_file']:.4f}", f"{r['alpha']:.4f}", f"{r['U']:.3f}",
+                            int(r["clipped"]), f"{r['cd_openfoam']:.6f}", f"{c:.6f}"])
+            return
         w.writerow(["file", "airfoil", "h_over_c", "alpha_deg", "U", "clipped", "cl_cfd", "cl_grid", "cl_openfoam", "cl_pred"])
         for r, c in zip(recs, cl_pred):
             w.writerow([r["file"], r["airfoil"], f"{r['h_file']:.4f}", f"{r['alpha']:.4f}", f"{r['U']:.3f}", int(r["clipped"]),
@@ -332,18 +358,31 @@ def write_errors(path, recs, cl_pred, target):
 
 
 def sweep_table(name, recs, preds, target, out):
-    """-Cl of each run: simulated (OpenFOAM's and on the grid) and from the networks (mean, range)."""
+    """-Cl of each run: simulated (OpenFOAM's and on the grid) and from the networks (mean, range).
+    With --target cd: OpenFOAM's Cd and the networks'."""
     p = np.array(preds)  # seeds x runs
     rows = []
-    print(f"\n{name}: -Cl against the ride height (networks: mean and range of {len(preds)})")
-    print(f"  {'h/c':>6s} {'OpenFOAM':>9s} {'grid':>7s} {'network':>8s} {'(range)':>15s} {'vs ' + target:>8s}")
-    for i, r in enumerate(recs):
-        ref = r["cl_" + target]
-        rows.append({"run": r["run"], "h_over_c": r["h_run"], "downforce": -r["cl_openfoam"], "downforce_grid": -r["cl_grid"],
-                     "downforce_net": -p[:, i].mean(), "net_min": -p[:, i].max(), "net_max": -p[:, i].min(),
-                     f"net_vs_{target}_pct": 100 * (p[:, i].mean() / ref - 1)})
-        print(f"  {r['h_run']:6.3f} {-r['cl_openfoam']:9.3f} {-r['cl_grid']:7.3f} {-p[:, i].mean():8.3f} "
-              f"({-p[:, i].max():.3f}-{-p[:, i].min():.3f}) {100 * (p[:, i].mean() / ref - 1):+7.1f}%")
+    if target == "cd":
+        print(f"\n{name}: Cd against the ride height (networks: mean and range of {len(preds)})")
+        print(f"  {'h/c':>6s} {'OpenFOAM':>9s} {'network':>8s} {'(range)':>17s} {'vs OpenFOAM':>11s}")
+        for i, r in enumerate(recs):
+            ref = r["cd_openfoam"]
+            rows.append({"run": r["run"], "h_over_c": r["h_run"], "drag": ref, "drag_net": p[:, i].mean(),
+                         "net_min": p[:, i].min(), "net_max": p[:, i].max(),
+                         "net_vs_openfoam_pct": 100 * (p[:, i].mean() / ref - 1)})
+            print(f"  {r['h_run']:6.3f} {ref:9.5f} {p[:, i].mean():8.5f} ({p[:, i].min():.5f}-{p[:, i].max():.5f}) "
+                  f"{100 * (p[:, i].mean() / ref - 1):+10.1f}%")
+        target = "openfoam"  # for the column name below
+    else:
+        print(f"\n{name}: -Cl against the ride height (networks: mean and range of {len(preds)})")
+        print(f"  {'h/c':>6s} {'OpenFOAM':>9s} {'grid':>7s} {'network':>8s} {'(range)':>15s} {'vs ' + target:>8s}")
+        for i, r in enumerate(recs):
+            ref = r["cl_" + target]
+            rows.append({"run": r["run"], "h_over_c": r["h_run"], "downforce": -r["cl_openfoam"], "downforce_grid": -r["cl_grid"],
+                         "downforce_net": -p[:, i].mean(), "net_min": -p[:, i].max(), "net_max": -p[:, i].min(),
+                         f"net_vs_{target}_pct": 100 * (p[:, i].mean() / ref - 1)})
+            print(f"  {r['h_run']:6.3f} {-r['cl_openfoam']:9.3f} {-r['cl_grid']:7.3f} {-p[:, i].mean():8.3f} "
+                  f"({-p[:, i].max():.3f}-{-p[:, i].min():.3f}) {100 * (p[:, i].mean() / ref - 1):+7.1f}%")
     dev = [r[f"net_vs_{target}_pct"] for r in rows]
     print(f"  mean {np.mean(dev):+.1f}%, mean |.| {np.mean(np.abs(dev)):.1f}%")
     base = os.path.basename(os.path.normpath(name))  # e.g. sweep_naca4412
@@ -423,13 +462,14 @@ def load_models(args, data, sets):
         worst = 0.0
         for name in ("val", "test"):
             with open(os.path.join(folder, f"errors_{name}.csv")) as f:
-                stored = {r["file"]: float(r["cl_pred"]) for r in csv.DictReader(f)}
+                stored = {r["file"]: float(r[pred_column(args.target)]) for r in csv.DictReader(f)}
             cl_pred = predict(net, data[name]["x"], data["scale"])
             worst = max(worst, max(abs(stored[r["file"]] - c) for r, c in zip(sets[name], cl_pred)))
+        q = QUANTITY[args.target]
         print(f"seed {seed}: loaded (width {s['width']}, depth {s['depth']}); input scales as in training within "
-              f"{off:.1e}; Cl as in its errors files within {worst:.1e}", flush=True)
-        if worst > 1e-3:
-            raise SystemExit(f"seed {seed}: the saved model does not reproduce its own Cl here (inputs differ?)")
+              f"{off:.1e}; {q} as in its errors files within {worst:.1e}", flush=True)
+        if worst > (5e-5 if args.target == "cd" else 1e-3):  # Cd is about 50 times smaller than Cl
+            raise SystemExit(f"seed {seed}: the saved model does not reproduce its own {q} here (inputs differ?)")
         nets[seed] = (net, summary)
     return nets
 
@@ -442,6 +482,9 @@ def main(argv=None):
         with open(os.path.join(args.out, f"s{args.seeds[0]}", "summary.json")) as f:
             saved = json.load(f)["settings"]
         args.target, args.stations, args.val_percent = saved["target"], saved["stations"], saved["val_percent"]
+    if args.target == "cd" and args.compare:
+        raise SystemExit("--compare compares Cl with the U-Net, which gives no drag: leave it out with --target cd")
+    q = QUANTITY[args.target]
     start = time.time()
     sets = load_sets(args)
     far = max(abs(r["h"] - r["h_file"]) for name in ("train", "val", "test") for r in sets[name])
@@ -479,12 +522,12 @@ def main(argv=None):
             torch.save(net.state_dict(), os.path.join(folder, "model.pt"))
             with open(os.path.join(folder, "summary.json"), "w") as f:
                 json.dump(summary, f, indent=1)
-            print(f"seed {seed}: Cl error validation {100 * summary['val']['rel']:.2f}%, test {100 * summary['test']['rel']:.2f}% "
+            print(f"seed {seed}: {q} error validation {100 * summary['val']['rel']:.2f}%, test {100 * summary['test']['rel']:.2f}% "
                   f"(median {100 * summary['test']['median_rel']:.2f}%, R2 {summary['test']['r2']:.3f}); weights of epoch "
                   f"{epoch}, {summary['train_seconds']:.0f} s", flush=True)
     for name in ("val", "test"):
         errs = [rel_error(p, data[name]["cl"]) for p in preds[name]]
-        print(f"{name}: Cl error {100 * np.mean(errs):.2f}% (mean of {len(errs)} seeds: "
+        print(f"{name}: {q} error {100 * np.mean(errs):.2f}% (mean of {len(errs)} seeds: "
               + " ".join(f"{100 * e:.2f}" for e in errs) + ")")
     for name in preds:
         if name.startswith("sweep:"):

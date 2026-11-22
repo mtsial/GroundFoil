@@ -1,6 +1,6 @@
 # 16. All the data: the final models
 
-[README](../README.md) · ← [15. The pressure along the wing](15-surface-model.md) · [Workflow](../README.md#workflow)
+[README](../README.md) · ← [15. The pressure along the wing](15-surface-model.md) · [17. The drag alone](17-drag-model.md) → · [Workflow](../README.md#workflow)
 
 With all eight batches of simulations done, the dataset has twice the
 samples of steps 10–15: 6,886 from 8,000 runs, on 1,416 airfoils. We
@@ -182,15 +182,16 @@ Twice the data made all three models 12–15% better, and the picture of steps
 13–15 holds: for the downforce, the network of step 14 and the surface
 model are about three times closer than the U-Net and 10–40 times faster;
 the surface model also gives the drag, the moment and where the flow
-separates; the U-Net gives the whole flow. With up to a few hundred
+separates (for the drag, a network of its own does better:
+[step 17](17-drag-model.md)); the U-Net gives the whole flow. With up to a few hundred
 samples, a Gaussian process is the better model of the downforce, and it
 says how sure it is. More data would still help the U-Net; longer training
 would not.
 
 The samples, the trained models and the NACA 4412 sweep are on Zenodo:
 https://doi.org/10.5281/zenodo.24424329 ([how to use them](howto.md#the-published-data-zenodo)).
-**Next:** a paper on these results.
+**Next:** [a network for the drag alone](17-drag-model.md).
 
 ---
 
-[README](../README.md) · ← [15. The pressure along the wing](15-surface-model.md) · [Workflow](../README.md#workflow)
+[README](../README.md) · ← [15. The pressure along the wing](15-surface-model.md) · [17. The drag alone](17-drag-model.md) → · [Workflow](../README.md#workflow)

@@ -61,6 +61,12 @@ Other references used in the extension:
   steady-state laminar flow approximation with deep convolutional neural
   networks", arXiv:2004.08826, 2020 (a U-Net with the signed distance and a
   flow-region channel as inputs).
+- F. Bonnet, A. J. Mazari, P. Cinnella and P. Gallinari, "AirfRANS: High
+  fidelity computational fluid dynamics dataset for approximating
+  Reynolds-averaged Navier–Stokes solutions", *Advances in Neural
+  Information Processing Systems* 35 (NeurIPS 2022), Datasets and Benchmarks
+  Track, arXiv:2212.07564 (a benchmark of flow-field models of airfoils in
+  free air; the drag computed from their fields was the hardest quantity).
 
 Airfoil coordinates come from the UIUC Airfoil Coordinates Database
 (https://m-selig.ae.illinois.edu/ads/coord_database.html).

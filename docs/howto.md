@@ -17,7 +17,12 @@ dataset, and the training on Kaggle.
 - [Parameter scan and dataset](#parameter-scan-and-dataset)
 - [Training the U-Net](#training-the-u-net)
 - [Ride-height sweeps of new wings](#ride-height-sweeps-of-new-wings)
+- [A model for the downforce alone](#a-model-for-the-downforce-alone)
+- [The pressure along the wing](#the-pressure-along-the-wing)
+- [The final runs, on all the data](#the-final-runs-on-all-the-data)
+- [The drag alone](#the-drag-alone)
 - [The published data (Zenodo)](#the-published-data-zenodo)
+- [Predictions for any wing, and pictures of the flow](#predictions-for-any-wing-and-pictures-of-the-flow)
 - [Notes](#notes)
 
 ---
@@ -427,6 +432,20 @@ Kaggle. Give the seven sizes of the notebook: without `--fractions`,
 copy data\unet\final\cl_learning_curve.csv ..\results\downforce_learning_curve_final.csv
 ```
 The results are in [All the data: the final models](16-final-models.md).
+
+## The drag alone
+
+The network for the downforce alone, trained on OpenFOAM's drag instead
+([step 17](17-drag-model.md)), with the settings chosen for the downforce in
+the final runs. It uses the samples of the final runs (`train_files.txt`,
+above) and runs on the laptop: both seeds and the two sweeps in about 6
+minutes with 8 CPU threads; then the comparison with the surface model's
+drag, which needs the surface model's sweeps from above:
+```powershell
+cd ground_effect
+..\.venv\Scripts\python.exe baseline_cl.py --data data\dataset\train --files data\unet\final\train_files.txt --test data\dataset\test --target cd --width 256 --depth 4 --weight-decay 1e-3 --lr 1e-3 --seeds 0 1 --threads 8 --out data\unet\final\baseline_cd --sweep data\sweep_naca4412 data\sweep_tyrrell026
+..\.venv\Scripts\python.exe drag_report.py --drag data\unet\final\baseline_cd --surface data\unet\final\surface_model --csv ..\results\drag_model_final.csv
+```
 
 ## The published data (Zenodo)
 
