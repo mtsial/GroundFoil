@@ -107,8 +107,8 @@ The study in seventeen steps, each with its own page:
     nose, so small errors along the surface add up.
 
 **Data:** the simulations, the trained models and the NACA 4412 sweep are on
-Zenodo, https://doi.org/10.5281/zenodo.24424329. **Next:** a paper on these
-results. All commands are in [How to run it](docs/howto.md).
+Zenodo, https://doi.org/10.5281/zenodo.24424329. All commands are in
+[How to run it](docs/howto.md).
 
 ## What the network learns
 

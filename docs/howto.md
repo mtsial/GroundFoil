@@ -21,6 +21,7 @@ dataset, and the training on Kaggle.
 - [The pressure along the wing](#the-pressure-along-the-wing)
 - [The final runs, on all the data](#the-final-runs-on-all-the-data)
 - [The drag alone](#the-drag-alone)
+- [The Gaussian process on the sweeps](#the-gaussian-process-on-the-sweeps)
 - [The published data (Zenodo)](#the-published-data-zenodo)
 - [Predictions for any wing, and pictures of the flow](#predictions-for-any-wing-and-pictures-of-the-flow)
 - [Notes](#notes)
@@ -445,6 +446,26 @@ drag, which needs the surface model's sweeps from above:
 cd ground_effect
 ..\.venv\Scripts\python.exe baseline_cl.py --data data\dataset\train --files data\unet\final\train_files.txt --test data\dataset\test --target cd --width 256 --depth 4 --weight-decay 1e-3 --lr 1e-3 --seeds 0 1 --threads 8 --out data\unet\final\baseline_cd --sweep data\sweep_naca4412 data\sweep_tyrrell026
 ..\.venv\Scripts\python.exe drag_report.py --drag data\unet\final\baseline_cd --surface data\unet\final\surface_model --csv ..\results\drag_model_final.csv
+```
+
+## The Gaussian process on the sweeps
+
+`gp_sweep.py` fits the Gaussian process of the learning curves on all the
+training samples of the final runs and predicts the two sweeps, with a
+standard deviation at every ride height. The fit needs a GPU (about half an
+hour on a T4), so it runs on Kaggle (both datasets, a GPU), with `data`,
+`smooth` and `test_smooth` found as in the final runs; it writes the fitted
+settings to `gp.json`:
+```python
+!python gp_sweep.py --fit --data {data}/train --test {data}/test --airfoil-dirs {smooth} {test_smooth} --out /kaggle/working/gp
+```
+The sweeps stay on the laptop. With `gp.json` from the output in
+`data\unet\final\gp`, the script rebuilds the Gaussian process from those
+settings on the same training samples (it checks their list and the test
+predictions against the fit's) and writes one table per wing, in seconds:
+```powershell
+cd ground_effect
+..\.venv\Scripts\python.exe gp_sweep.py --params data\unet\final\gp\gp.json --data data\dataset\train --files data\unet\final\train_files.txt --test data\dataset\test --sweep data\sweep_naca4412 data\sweep_tyrrell026 --out data\unet\final\gp
 ```
 
 ## The published data (Zenodo)

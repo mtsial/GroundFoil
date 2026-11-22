@@ -86,8 +86,6 @@ the pressure along the wing; the U-Net for the whole flow.
 The drag network came after the Zenodo record was published, so it is not
 in it; the commands above train it again in a few minutes.
 
-**Next:** a paper on these results.
-
 ---
 
 [README](../README.md) · ← [16. All the data](16-final-models.md) · [Workflow](../README.md#workflow)

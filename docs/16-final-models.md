@@ -129,7 +129,9 @@ difference over the ride heights (tables:
 [U-Net, Tyrrell 026](../results/sweep_tyrrell026_final.csv),
 [network of step 14](../results/downforce_model_final.csv),
 [surface model, NACA 4412](../results/sweep_naca4412_surface_model_final.csv),
-[surface model, Tyrrell 026](../results/sweep_tyrrell026_surface_model_final.csv)):
+[surface model, Tyrrell 026](../results/sweep_tyrrell026_surface_model_final.csv),
+[Gaussian process, NACA 4412](../results/sweep_naca4412_gp_final.csv),
+[Gaussian process, Tyrrell 026](../results/sweep_tyrrell026_gp_final.csv)):
 
 | | NACA 4412, 3,096 samples | NACA 4412, 6,177 | Tyrrell 026, 3,096 | Tyrrell 026, 6,177 |
 |---|---|---|---|---|
@@ -137,6 +139,7 @@ difference over the ride heights (tables:
 | Network of step 14 | 0.24% (0.75%) | 0.19% (0.39%) | 1.2% (1.8%) | 0.36% (0.72%) |
 | Surface model | 0.15% (0.30%) | 0.27% (0.51%) | 2.0% (2.8%) | 0.38% (0.84%) |
 | Surface model: drag | 2.3% | 4.0% | 2.8% | 4.7% |
+| Gaussian process ([how](howto.md#the-gaussian-process-on-the-sweeps)) | – | 0.29% (1.0%) | – | 1.1% (1.7%) |
 
 - **The small models are now close on both wings:** within 0.9% of
   OpenFOAM's force at every height. They gained the most on the F1 wing:
@@ -149,6 +152,14 @@ difference over the ride heights (tables:
   the CFD's ride height, h/c 0.155. The Tyrrell 026's peak is almost flat
   between h/c 0.112 and 0.134 (OpenFOAM: 1.745 and 1.748); all three put
   it at 0.134, as OpenFOAM does, the U-Net by only 0.03%.
+- **The Gaussian process** (added later, fitted on all the samples) lies
+  between the small networks and the U-Net: 0.29% and 1.1% off on average.
+  Its standard deviation shows which wing is less like the data: 0.9–1.5%
+  of the downforce on the NACA 4412, 2.3–6.1% on the F1 wing, the most at
+  h/c 0.671, above the ride heights of the samples. OpenFOAM's force lies
+  within 1.96 standard deviations at all 20 heights: the uncertainty is
+  cautious, not too sure. It puts the F1 wing's peak at h/c 0.112, one step
+  lower than OpenFOAM, by 0.07%.
 - **The surface model's drag on the two wings got worse:** 4.0% and 4.7%
   off on average, too high on the NACA 4412 and too low on the F1 wing at
   every height, although its drag on the test samples improved
