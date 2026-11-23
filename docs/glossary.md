@@ -40,4 +40,7 @@ Words used on these pages.
 | Gaussian process | A classical statistical model (also called kriging) that predicts a number from how close a new case is to each training case, and also says how sure it is (a standard deviation). Its cost grows quickly with the number of training cases, so it suits small datasets |
 | Loss (L1) | What training makes small: how far the network's output is from the simulation. L1 is the mean absolute difference |
 | Random weights, free-air model | The two ways a training run starts: from random numbers in the network, or from the U-Net trained on the free-air data of step 1 |
+| Camber, thickness | How far the airfoil's middle line bends away from the straight chord, and how thick the airfoil is; both in percent of the chord |
+| Peak (of the downforce) | The ride height at which a wing's downforce is largest; closer to the ground the downforce falls again |
+| Rank correlation | How closely two quantities rise together, from −1 to +1, using only their order (Spearman's): +1 when one always rises with the other |
 | Wilcoxon test, p | A test of whether one model is closer to the simulation than another on the same samples. p is the chance of a difference this consistent if the two were equally good: small p, a real difference |

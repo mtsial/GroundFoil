@@ -22,6 +22,7 @@ dataset, and the training on Kaggle.
 - [The final runs, on all the data](#the-final-runs-on-all-the-data)
 - [The drag alone](#the-drag-alone)
 - [The Gaussian process on the sweeps](#the-gaussian-process-on-the-sweeps)
+- [Where the downforce peaks](#where-the-downforce-peaks)
 - [The published data (Zenodo)](#the-published-data-zenodo)
 - [Predictions for any wing, and pictures of the flow](#predictions-for-any-wing-and-pictures-of-the-flow)
 - [Notes](#notes)
@@ -466,6 +467,43 @@ predictions against the fit's) and writes one table per wing, in seconds:
 ```powershell
 cd ground_effect
 ..\.venv\Scripts\python.exe gp_sweep.py --params data\unet\final\gp\gp.json --data data\dataset\train --files data\unet\final\train_files.txt --test data\dataset\test --sweep data\sweep_naca4412 data\sweep_tyrrell026 --out data\unet\final\gp
+```
+
+## Where the downforce peaks
+
+The map of [step 18](18-ride-height-map.md): the two downforce networks of the
+final runs (`data\unet\final\baseline_cl_openfoam`, from the Kaggle output
+above) predict a ride-height sweep of every airfoil with a converged sample,
+at angles from 0° to 10° and at 10, 30 and 50 m/s. On Windows, in about half
+a minute; it writes `peaks.csv` (one row per airfoil, speed and angle: where
+the peak lies, its downforce, the airfoil's shape numbers) and `curves.npz`
+(all the predicted sweeps):
+```powershell
+cd ground_effect
+..\.venv\Scripts\python.exe ride_height_map.py --data data\dataset\train data\dataset\test --models data\unet\final\baseline_cl_openfoam --out data\ride_height_map
+```
+The new simulations that check it: 22 sweeps of six test airfoils, 264
+runs, inside the container, 4 at a time, about 5 hours (runs that already
+have a sample are skipped, so after an interruption the same command goes
+on):
+```bash
+cd /work/ground_effect
+bash sweep_peaks.sh
+```
+And the 10 runs that explained the one irregular sweep (goe775 at 10 m/s, on
+the fine mesh and at ride heights in between), about 20 minutes:
+```bash
+bash sweep_goe775_check.sh
+```
+Then, on Windows, the comparison with the networks, with the NACA 4412 and
+Tyrrell 026 sweeps of above (the Tyrrell 026 needs its wing file, as for its
+sweep), and the same for the check; then the tables for `results`:
+```powershell
+..\.venv\Scripts\python.exe ride_height_map.py --sweeps data\sweep_peaks data\sweep_naca4412 data\sweep_tyrrell026 --models data\unet\final\baseline_cl_openfoam --out data\ride_height_map
+..\.venv\Scripts\python.exe ride_height_map.py --sweeps data\sweep_goe775_check --models data\unet\final\baseline_cl_openfoam --out data\ride_height_map\goe775_check
+copy data\ride_height_map\sweeps.csv ..\results\ride_height_sweeps.csv
+copy data\ride_height_map\sweep_points.csv ..\results\ride_height_points.csv
+copy data\ride_height_map\goe775_check\sweep_points.csv ..\results\ride_height_goe775_check.csv
 ```
 
 ## The published data (Zenodo)

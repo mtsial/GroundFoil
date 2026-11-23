@@ -1,6 +1,6 @@
 # 17. The drag alone: a network for the drag
 
-[README](../README.md) · ← [16. All the data](16-final-models.md) · [Workflow](../README.md#workflow)
+[README](../README.md) · ← [16. All the data](16-final-models.md) · [18. Where the downforce peaks](18-ride-height-map.md) → · [Workflow](../README.md#workflow)
 
 The surface model of [step 15](15-surface-model.md) gets its drag by adding
 up its pressure and friction along the wing, and on the test airfoils that
@@ -88,4 +88,4 @@ in it; the commands above train it again in a few minutes.
 
 ---
 
-[README](../README.md) · ← [16. All the data](16-final-models.md) · [Workflow](../README.md#workflow)
+[README](../README.md) · ← [16. All the data](16-final-models.md) · [18. Where the downforce peaks](18-ride-height-map.md) → · [Workflow](../README.md#workflow)

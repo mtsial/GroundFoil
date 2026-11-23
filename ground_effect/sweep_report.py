@@ -47,7 +47,7 @@ def load(folder):
                              "alpha": float(r["alpha_deg"]), "U": float(r["U"]), "downforce": -float(r["Cl"]),
                              "Cd": float(r["Cd"]), "converged": converged, "cl_range": 100 * float(r["cl_range"]),
                              "reversed": 100 * float(r["reversed_flow"]), "iterations": int(r["iterations"]),
-                             "file": f"{run}/{r['file']}" if converged else f"{run}/not_converged/{r['file']}"})
+                             "file": f"{run}/{r['file']}"})  # not_converged/ is in r['file'] already
     rows.sort(key=lambda r: (r["h"] is None, r["h"] or 0.0))
     free = next((r for r in rows if r["h"] is None), None)
     for r in rows:
