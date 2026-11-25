@@ -508,8 +508,10 @@ copy data\ride_height_map\goe775_check\sweep_points.csv ..\results\ride_height_g
 
 ## The published data (Zenodo)
 
-The samples, the final models and the NACA 4412 sweep are on Zenodo,
-https://doi.org/10.5281/zenodo.24424329; its README describes every file.
+The samples, the final models (with the drag network since version 1.1), the
+NACA 4412 sweep, the ride-height sweeps of step 18 and the map of the peaks are
+on Zenodo, https://doi.org/10.5281/zenodo.24424328 (this link always opens the
+latest version); its README describes every file.
 Download the files into the project folder, check them (in Git Bash; every
 line should say OK), and unzip them where the commands on this page expect
 them:
@@ -520,6 +522,10 @@ sha256sum -c SHA256SUMS.txt
 .venv\Scripts\python.exe -m zipfile -e groundfoil_samples.zip ground_effect\data\dataset
 .venv\Scripts\python.exe -m zipfile -e groundfoil_models.zip ground_effect\data\unet
 .venv\Scripts\python.exe -m zipfile -e sweep_naca4412.zip ground_effect\data
+.venv\Scripts\python.exe -m zipfile -e groundfoil_drag_models.zip ground_effect\data\unet
+.venv\Scripts\python.exe -m zipfile -e sweep_peaks.zip ground_effect\data
+.venv\Scripts\python.exe -m zipfile -e sweep_goe775_check.zip ground_effect\data
+.venv\Scripts\python.exe -m zipfile -e ride_height_map.zip ground_effect\data
 ```
 The airfoil files are not on Zenodo, as the UIUC database states no terms for
 passing them on: make them as in [Airfoil smoothing](#airfoil-smoothing-on-windows),

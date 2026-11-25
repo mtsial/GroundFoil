@@ -200,7 +200,7 @@ says how sure it is. More data would still help the U-Net; longer training
 would not.
 
 The samples, the trained models and the NACA 4412 sweep are on Zenodo:
-https://doi.org/10.5281/zenodo.24424329 ([how to use them](howto.md#the-published-data-zenodo)).
+https://doi.org/10.5281/zenodo.24424328 ([how to use them](howto.md#the-published-data-zenodo)).
 **Next:** [a network for the drag alone](17-drag-model.md).
 
 ---
