@@ -1,0 +1,15 @@
+model,label,coefficient,seeds,test_rel_error,test_mae,test_rmse,test_r2,test_median_rel_error,test_largest_error,val_rel_error,network_closer_samples,n_samples,wilcoxon_p_samples,network_closer_airfoils,n_airfoils,wilcoxon_p_airfoils,settings,settings_at_end_of_range
+surface,Surface model,Cl,2,0.0117695,0.0150472,0.0408696,0.991256,0.00536332,0.337744,0.00879882,50,102,0.223693,12,28,0.245096,,
+network,Downforce network,Cl,2,0.0124167,0.0158746,0.0338009,0.994229,0.006123,0.217659,0.0101299,,,,,,,,
+gp,Gaussian process,Cl,1,0.0150347,0.0192217,0.0409393,0.991547,0.00760708,0.283636,0.0152209,60,102,0.0272298,17,28,0.143773,,
+network_grid,Downforce network trained on the grid's Cl,Cl,2,0.0218139,0.0278888,0.0492224,0.987779,0.0156514,0.364983,0.0197522,77,102,5.50419e-10,25,28,1.02073e-06,,
+svr,Support vector regression,Cl,1,0.0379051,0.048461,0.0643752,0.979099,0.0323838,0.296831,0.0343357,90,102,9.88151e-14,26,28,1.02073e-06,"{""C"": 300, ""gamma"": 0.014705882352941176, ""epsilon"": 0.03}",
+unet,"U-Net, 80,000 iterations (Cl from its pressure)",Cl,2,0.0397312,0.0507958,0.0875793,0.961296,0.0248848,0.586035,0.0378215,90,102,3.21498e-14,28,28,7.45058e-09,,
+unet_160k,"U-Net, 160,000 iterations (Cl from its pressure)",Cl,2,0.0409764,0.0523877,0.0932684,0.956019,0.0250254,0.563548,0.0355344,90,102,2.29793e-14,27,28,1.49012e-08,,
+polynomial,Polynomial regression,Cl,1,0.062612,0.0800485,0.110674,0.938223,0.04395,0.364969,0.0657201,93,102,1.49388e-16,28,28,7.45058e-09,"{""degree"": 2, ""alpha"": 10.0}",
+random_forest,Random forest,Cl,2,0.0688143,0.0879781,0.121152,0.925958,0.0544708,0.572199,0.0687748,98,102,4.97934e-17,28,28,7.45058e-09,"{""max_features"": 0.5, ""min_samples_leaf"": 1}",
+network,Drag network,Cd,2,0.0159803,0.00063904,0.00146164,0.997492,0.00864853,0.00904757,0.0133336,,,,,,,,
+svr,Support vector regression,Cd,1,0.0537286,0.00214857,0.00417796,0.979528,0.046883,0.0313025,0.0446103,87,102,2.61532e-14,26,28,6.55651e-07,"{""C"": 3000, ""gamma"": 0.004411764705882353, ""epsilon"": 0.03}","C=3000 (highest tried, not grown further, for the run time; 0.087 points better than the next value inside)"
+surface,Surface model,Cd,2,0.0750181,0.00299992,0.00505137,0.969918,0.0522089,0.0227781,0.0494563,97,102,3.43961e-17,27,28,1.49012e-08,,
+polynomial,Polynomial regression,Cd,1,0.0800698,0.00320194,0.00494568,0.971313,0.069628,0.0255082,0.0892379,89,102,3.6341e-16,25,28,1.04308e-07,"{""degree"": 2, ""alpha"": 100.0}",
+random_forest,Random forest,Cd,2,0.0868272,0.00347216,0.00647682,0.9508,0.0597916,0.0446713,0.102152,92,102,4.40758e-16,27,28,2.23517e-08,"{""max_features"": 0.5, ""min_samples_leaf"": 1}",

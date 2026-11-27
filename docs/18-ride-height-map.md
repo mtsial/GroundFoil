@@ -1,6 +1,6 @@
 # 18. Where the downforce peaks: a map of 1,444 airfoils
 
-[README](../README.md) · ← [17. The drag alone](17-drag-model.md) · [Workflow](../README.md#workflow)
+[README](../README.md) · ← [17. The drag alone](17-drag-model.md) · [19. Classical regressions](19-classical-baselines.md) → · [Workflow](../README.md#workflow)
 
 Every inverted airfoil has a ride height at which its downforce is largest;
 closer to the ground the downforce falls again. Where is that peak, and what
@@ -214,4 +214,4 @@ published data and models.
 
 ---
 
-[README](../README.md) · ← [17. The drag alone](17-drag-model.md) · [Workflow](../README.md#workflow)
+[README](../README.md) · ← [17. The drag alone](17-drag-model.md) · [19. Classical regressions](19-classical-baselines.md) → · [Workflow](../README.md#workflow)

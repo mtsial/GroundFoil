@@ -44,7 +44,7 @@ Words used here are explained in the [glossary](docs/glossary.md).
 
 ## Workflow
 
-The study in eighteen steps, each with its own page:
+The study in nineteen steps, each with its own page:
 
 1. **[Reproduction](docs/01-reproduction.md):** we first ran the original
    free-air study on current software, to start from a working pipeline and a
@@ -120,6 +120,15 @@ The study in eighteen steps, each with its own page:
     separated from about 78% of the chord onwards. One irregular sweep came
     from the mesh: a thick wing with a blunt trailing edge has two steady
     solutions on the normal mesh at the lowest speed, one on the fine mesh.
+19. **[Classical regressions](docs/19-classical-baselines.md):** polynomial
+    regression, a random forest and support vector regression, tuned on the
+    validation samples, on the same inputs and samples: 3.8–6.9% off for the
+    downforce and 5.4–8.7% for the drag on the test airfoils, three to five
+    times the small networks' errors (1.2% and 1.6%), and behind them on 25
+    to 28 of the 28 airfoils. Every model is also scored by the
+    root-mean-square error, R² and the largest error: the ranking stays, and
+    the surface model, as accurate as the downforce network on average, has
+    a few larger misses.
 
 **Data:** the simulations, the trained models, the ride-height sweeps and the
 map of the peaks are on Zenodo, https://doi.org/10.5281/zenodo.24424328. All commands are in
@@ -150,7 +159,8 @@ the simulated pressure and velocity.*
 | Pressure along the wing | a small network for the pressure and the friction along the surface: downforce 1.2%, drag 7.5% on the test airfoils (4–5% on the two wings), moment 2.2%; the separated part of the surface, 10% of it on average, is off by 0.2% of the surface | [Steps 15 and 16](docs/16-final-models.md) |
 | Drag from a model of its own | the small network of step 14 trained on the drag: 1.6% error on the test airfoils, against 7.5% for the drag added up from the surface model; 0.3% and 1.3% on the two wings (4.0% and 4.7%) | [Step 17](docs/17-drag-model.md) |
 | Where the downforce peaks | over 1,444 airfoils, the ride height of the largest downforce rises with the angle (median h/c 0.107, 0.146 and 0.204 at 2°, 5° and 8°), the camber and the thickness, and falls slightly with the speed; checked against 264 new simulations of six unseen airfoils: within 1.4% (median); at the peak the flow under the wing has separated from x/c ≈ 0.78 | [Step 18](docs/18-ride-height-map.md) |
-| Downforce from little data | a Gaussian process is the most accurate model of the downforce with up to about 200 training samples (7.4% with 97, where the small network is 12.4%), and says how sure it is; from 386 samples on, the small network is better | [Step 16](docs/16-final-models.md) |
+| Downforce from little data | a Gaussian process is the most accurate model of the downforce with up to about 200 training samples (7.4% with 97, where the small network is 12.4%), and says how sure it is; from 386 samples on, the small network is better (with all the samples by a margin not significant over the 28 test airfoils) | [Steps 16 and 19](docs/16-final-models.md) |
+| Classical regressions | polynomial regression, a random forest and support vector regression, tuned on the validation samples: downforce 3.8–6.9% and drag 5.4–8.7% off on the test airfoils, three to five times the small networks' errors, at every amount of data | [Step 19](docs/19-classical-baselines.md) |
 | Unseen wing: NACA 4412 | at 11 ride heights: downforce within 2.0% with all the samples (5% and 4% with 3,096, without and with the distance input)¹, peak at the same height as the CFD | [Steps 11, 13 and 16](docs/16-final-models.md) |
 | Unseen wing: Tyrrell 026 (F1) | at the tunnel's 9 ride heights: downforce within 2.6% with all the samples (1.1% with 3,096 and the distance input, 10–19% low without it)¹; the suction peak still too weak | [Steps 12, 13 and 16](docs/16-final-models.md) |
 
@@ -191,7 +201,7 @@ checks, the dataset and the training) is in [How to run it](docs/howto.md).
 
 ```
 README.md                   this page: summary, the steps, results, quick start
-docs/                       one page per step (01-reproduction.md to 18-ride-height-map.md), howto.md, glossary.md, references.md
+docs/                       one page per step (01-reproduction.md to 19-classical-baselines.md), howto.md, glossary.md, references.md
 Dockerfile                  OpenFOAM v2606 + gmsh + Python environment
 patches/openfoam-v2606.patch  fixes to the original code for OpenFOAM v2606
 scripts/view_sample.py      plots all six channels of a training sample
@@ -239,6 +249,7 @@ ground_effect/predict.py          the trained models for any airfoil, ride heigh
 ground_effect/field_figure.py     simulated and predicted flow fields side by side, with their difference
 ground_effect/downforce_report.py figure and table of the U-Net against the comparison model (step 14)
 ground_effect/cl_learning_curve.py  downforce error against the amount of data: small network, Gaussian process and U-Net
+ground_effect/classical_baselines.py  classical regressions for the forces (polynomial, random forest, support vector), and every model scored alike (step 19)
 ground_effect/surface_data.py     the pressure and friction along the wing at fixed points, on the mesh's own faces; Cl, Cd, Cm from them
 ground_effect/surface_model.py    a small network for the pressure and the friction along the wing (step 15)
 ground_effect/surface_report.py   pressure and friction along the wing: CFD against the surface model

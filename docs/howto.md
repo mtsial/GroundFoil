@@ -23,6 +23,7 @@ dataset, and the training on Kaggle.
 - [The drag alone](#the-drag-alone)
 - [The Gaussian process on the sweeps](#the-gaussian-process-on-the-sweeps)
 - [Where the downforce peaks](#where-the-downforce-peaks)
+- [Classical regressions](#classical-regressions)
 - [The published data (Zenodo)](#the-published-data-zenodo)
 - [Predictions for any wing, and pictures of the flow](#predictions-for-any-wing-and-pictures-of-the-flow)
 - [Notes](#notes)
@@ -506,6 +507,28 @@ copy data\ride_height_map\sweep_points.csv ..\results\ride_height_points.csv
 copy data\ride_height_map\goe775_check\sweep_points.csv ..\results\ride_height_goe775_check.csv
 ```
 
+## Classical regressions
+
+The comparison of [step 19](19-classical-baselines.md), on Windows, with
+scikit-learn (see [Notes](#notes)). It needs the samples and the models of
+the final runs in `data\unet\final` as above (the U-Nets, the downforce
+networks, the drag network, the surface model and `cl_learning_curve.csv`,
+all in the Zenodo record), and `gp\gp.json` from the fit of the Gaussian
+process ([above](#the-gaussian-process-on-the-sweeps); without it, the
+Gaussian process is left out of the table). It trains polynomial
+regression, a random forest and support vector regression for the downforce
+at every size of the learning curve and, with all the samples, for the drag,
+choosing their settings on the validation samples; then it scores every
+model alike and writes the two tables. About 2.5 hours, nearly all of it the
+two searches of the support vector regression with all the samples (8 fits
+at a time; each takes up to a few hundred MB, so close other large programs).
+Finished models are kept in `data\unet\final\classical`, so after an
+interruption the same command goes on where it stopped:
+```powershell
+cd ground_effect
+..\.venv\Scripts\python.exe classical_baselines.py --data data\dataset\train --files data\unet\final\train_files.txt --test data\dataset\test --final data\unet\final --out data\unet\final\classical --csv ..\results\classical_baselines.csv --learning-curve-csv ..\results\classical_learning_curve.csv
+```
+
 ## The published data (Zenodo)
 
 The samples, the final models (with the drag network since version 1.1), the
@@ -575,7 +598,8 @@ and 90th percentile) and for any other sample:
 
 The Windows scripts (training, `make_tyrrell026.py` and the airfoil scripts)
 run in a local Python environment, `.venv`: Python 3.14 with numpy 2.5,
-scipy 1.18, matplotlib 3.11 and PyTorch 2.15 (CPU).
+scipy 1.18, matplotlib 3.11 and PyTorch 2.15 (CPU), and for step 19
+scikit-learn 1.9 (`.venv\Scripts\python.exe -m pip install scikit-learn`).
 
 Runs that do not converge (Cl not steady, even after continuing while it
 settled) are saved in `not_converged/` inside the output folder, not with the

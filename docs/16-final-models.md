@@ -111,7 +111,9 @@ at each size ([table](../results/downforce_learning_curve_final.csv)):
 
 - **With few samples, the Gaussian process is best:** with 97 samples it is
   7.4% off, the network of step 14 12.4% and the U-Net 16.7%. From 386
-  samples on, the network is better. (Here the network keeps the settings
+  samples on, the network is better; with all the samples only by a small
+  margin, which is not significant over the 28 test airfoils
+  ([step 19](19-classical-baselines.md)). (Here the network keeps the settings
   of step 14's first tuning, four layers of 128 neurons, at every size; the
   one tuned on all the samples, in the table above, is 1.24% off.)
 - **The Gaussian process knows how sure it is:** 83–95% of its errors lie

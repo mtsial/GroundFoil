@@ -1,0 +1,36 @@
+model,label,n_train,seeds,test_rel_error
+network,"Downforce network (fixed settings, the runs of cl_learning_curve.py)",97,2,0.123874
+network,"Downforce network (fixed settings, the runs of cl_learning_curve.py)",193,2,0.0595223
+network,"Downforce network (fixed settings, the runs of cl_learning_curve.py)",386,2,0.0314815
+network,"Downforce network (fixed settings, the runs of cl_learning_curve.py)",772,2,0.0219224
+network,"Downforce network (fixed settings, the runs of cl_learning_curve.py)",1544,2,0.0182268
+network,"Downforce network (fixed settings, the runs of cl_learning_curve.py)",3088,2,0.013503
+network,"Downforce network (fixed settings, the runs of cl_learning_curve.py)",6177,2,0.0117436
+gp,Gaussian process (the runs of cl_learning_curve.py),97,2,0.0743988
+gp,Gaussian process (the runs of cl_learning_curve.py),193,2,0.0534516
+gp,Gaussian process (the runs of cl_learning_curve.py),386,2,0.0367885
+gp,Gaussian process (the runs of cl_learning_curve.py),772,2,0.0268574
+gp,Gaussian process (the runs of cl_learning_curve.py),1544,2,0.0246112
+gp,Gaussian process (the runs of cl_learning_curve.py),3088,2,0.0209884
+gp,Gaussian process (the runs of cl_learning_curve.py),6177,2,0.0150347
+polynomial,Polynomial regression,97,2,0.15612
+polynomial,Polynomial regression,193,2,0.10613
+polynomial,Polynomial regression,386,2,0.0826999
+polynomial,Polynomial regression,772,2,0.0709361
+polynomial,Polynomial regression,1544,2,0.0671475
+polynomial,Polynomial regression,3088,2,0.0621028
+polynomial,Polynomial regression,6177,2,0.062612
+random_forest,Random forest,97,2,0.152482
+random_forest,Random forest,193,2,0.136699
+random_forest,Random forest,386,2,0.114253
+random_forest,Random forest,772,2,0.0992048
+random_forest,Random forest,1544,2,0.0805804
+random_forest,Random forest,3088,2,0.0753504
+random_forest,Random forest,6177,2,0.0688143
+svr,Support vector regression,97,2,0.138113
+svr,Support vector regression,193,2,0.0960847
+svr,Support vector regression,386,2,0.0736157
+svr,Support vector regression,772,2,0.0633466
+svr,Support vector regression,1544,2,0.058834
+svr,Support vector regression,3088,2,0.0535283
+svr,Support vector regression,6177,2,0.0379051

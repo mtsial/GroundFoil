@@ -44,3 +44,9 @@ Words used on these pages.
 | Peak (of the downforce) | The ride height at which a wing's downforce is largest; closer to the ground the downforce falls again |
 | Rank correlation | How closely two quantities rise together, from −1 to +1, using only their order (Spearman's): +1 when one always rises with the other |
 | Wilcoxon test, p | A test of whether one model is closer to the simulation than another on the same samples. p is the chance of a difference this consistent if the two were equally good: small p, a real difference |
+| Polynomial regression (ridge) | A classical model that writes the output as a sum of the inputs, their squares and their products, each with a fitted weight; the ridge penalty keeps the weights small so that it does not follow noise |
+| Random forest | A classical model that averages many decision trees, each grown on a random draw of the training samples; a tree splits the samples again and again by one input at a time |
+| Support vector regression | A classical model that fits a smooth curve through the training samples with a kernel (here Gaussian, like a bell around each sample), ignoring errors smaller than a set tolerance |
+| Settings (hyperparameters), tuning | The choices made before training, such as a network's size or the penalty of a polynomial; tuning tries several and keeps the one with the smallest error on the validation samples |
+| RMSE | Root-mean-square error: the square root of the mean squared error. Large errors count more than in the mean absolute error, so a model with a few large misses has a larger RMSE |
+| R² | The coefficient of determination: the share of the variation of the true values that a model explains, 1 for a perfect model, 0 for one that always predicts the mean |
